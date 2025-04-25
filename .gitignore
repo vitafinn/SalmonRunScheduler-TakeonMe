@@ -1,26 +1,28 @@
-# Dependencies
-node_modules/
+# Backend Dependencies
+backend/node_modules/
 
-# Databases
-*.db
-# If you have other db types, add them too e.g.:
-# *.sqlite
-# *.sqlite3
+# Frontend Dependencies
+frontend/node_modules/
 
-# Log files
+# Frontend Build Output (adjust if different)
+frontend/build/
+frontend/dist/
+
+# Databases (relative to backend)
+backend/*.db
+# Or if DB is at root: *.db
+
+# Log files (potentially in both)
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+backend/*.log
+frontend/*.log
 
-# Environment variables file (VERY IMPORTANT - often contains secrets!)
+# Environment variables (VERY IMPORTANT!)
 .env
+backend/.env
+frontend/.env
 .env.*
 !.env.example
-
-# Build output
-dist/
-build/
 
 # OS generated files
 .DS_Store
@@ -28,4 +30,4 @@ Thumbs.db
 
 # Optional: IDE/Editor directories
 .vscode/
-.idea/ 
+.idea/
