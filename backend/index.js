@@ -1,6 +1,7 @@
 // 1. Import libraries
 const express = require('express'); // Import Express.js
 const sqlite3 = require('sqlite3').verbose(); // Import SQLite3
+const cors = require('cors'); // solve CORS problem
 
 // 2. Create Express app
 const app = express();
@@ -10,6 +11,7 @@ const port = 3001;
 
 // 4. Middleware to parse JSON
 app.use(express.json());
+app.use(cors()); // Enable CORS for all origins (simplest for dev)
 
 // 5. Initialize SQLite database
 console.log("Attempting to connect to database..."); // Added log
@@ -123,7 +125,7 @@ app.post('/api/availability', (req, res) => {
 	
 	// --- 2. Time Parsing & Validation ---
 	// IMPORTANT ASSUMPTION: We treat the input from <input type="datetime-local">\
-	//AS IF IT WERE UTC. Append 'Z' to make it explicit for the Date parser.
+	// AS IF IT WERE UTC. Append 'Z' to make it explicit for the Date parser.
 	// Example Input: "2024-07-29T 10:00" becomes "2024-07-29T 10:00Z"
 	const startUTC = new Date(startTime + 'Z');
 	const endUTC = new Date(endTime + 'Z');
@@ -232,7 +234,8 @@ app.post('/api/availability', (req, res) => {
     }); // End of db.serialize block
 });
 
-//GET /api/availability - Get all *available* (not booked) slots
+
+// GET /api/availability - Get all *available* (not booked) slots
 app.get('/api/availability', (req, res) => {
 	console.log("Received request for GET /api/availability"); //Log request
 	

@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 
-// Import the components you created
+import AvailabilityDisplay from './components/AvailabilityDisplay/AvailabilityDisplay';
 import CreateAvailability from './components/CreateAvailability/CreateAvailability';
 //import JoinSession from './components/JoinSession/JoinSession';
 
@@ -12,10 +12,12 @@ function App() {
         🦑 Salmon Run Scheduler 🥚
       </h1>
 
-      {/* Add a container to center and limit width, like before */}
-      <div className="max-w-2xl mx-auto w-full"> {/* Added w-full to ensure it takes available width up to max */}
+      {/* added space-y-8 for spacing */}
+      <div className="max-w-2xl mx-auto w-full space-y-8"> 
         {/* Use the components here as JSX tags */}
         <CreateAvailability />
+
+        <AvailabilityDisplay />
 
       </div>
 
