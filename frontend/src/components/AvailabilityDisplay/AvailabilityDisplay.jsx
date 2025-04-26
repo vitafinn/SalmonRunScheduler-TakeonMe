@@ -1,5 +1,5 @@
 // src/components/AvailabilityDisplay/AvailabilityDisplay.jsx
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 
 
 
@@ -17,58 +17,70 @@ function AvailabilityDisplay(){
 	const [message, setMessage] = useState(''); // Input for Message
 	const [isBookingLoading, setIsBookingLoading] = useState(false); // Loading state for booking POST
 	const [bookingError, setBookingError] = useState(null); // Error state for booking POST
-	const [bookingSuccess, setBookingSuccess] = useState(null); // Success message + visitor code
+	const [bookingSuccessMessage, setBookingSuccessMessage] = useState(null); // Holds the main success text
+	const [lastVisitorCode, setLastVisitorCode] = useState(null); // Holds the code from the LAST successful booking
 
 
-	useEffect(() => {
-		// Define the function to fetch slots
-		const fetchSlots = async () => {
-			setIsLoading(true); // Set loading true at the start of fetch
-			setError(null); // Clear previous errors
-
-			try {
-				// Make the GET request to backend endpoint
-				const response = await fetch('http://localhost:3001/api/availability'); // Use the correct backend URL
-
-
-				// Check if the response status is OK (200)
-				if (!response.ok){
-					// if not OK, throw an error to be caught below
-					throw new Error(`HTTP error! Status: ${response.status}`);
-				}
-
-
-				// Parse the JSON response body
-				const data = await response.json();
-
-
-				// Update the state with the fetched slots
-				setAvailabilitySlots(data);
-
-			} catch (err) {
-				// If any error occured during fetch or parsing, update the error state
-				console.error("Error fetching available slots:", err);
-				setError(err.message); // Store the error message
-			} finally {
-				// This block runs regardless of success or failure
-				setIsLoading(false); // Set loading false once fetch is complete
+	// --- Define fetchSlots function using useCallback ---
+	// useCallback memoizes the function definition, preventing unneccessary re-creations
+	// which can be important if passed as a prop or used in dependency arrays.
+	const fetchSlots = useCallback(async () => {
+		console.log("Fetching available slots..."); // Added log
+		setIsLoading(true);
+		setError(null);
+		try {
+			const response = await fetch('http://localhost:3001/api/availability');
+			if (!response.ok){
+				throw new Error(`HTTP error! Status: ${response.status}`);
 			}
-		};
+			const data = await response.json();
+			setAvailabilitySlots(data);
+		} catch (err) {
+			console.error("Error fetching available slots:", err);
+			setError(err.message);
+			setAvailabilitySlots([]); // Clear slots on error
+		} finally {
+			setIsLoading(false);
+		}
+	}, []); // Empty dependency array: function definition doesn't depend on props/state 
 
 
-		// Call the fetch function
+	// --- useEffect to fetch slots on mount ---
+	useEffect(() => {
+		// Call the function defined above when the component mounts
 		fetchSlots();
-	}, []);
+	}, [fetchSlots]); // Include fetchSlots in dependency array as per linting rules with useCallback
 
 
-	// Function called when a "Book" button is clicked
+	// --- Function handleBookClick ---
 	const handleBookClick = (slotId) => {
 		console.log("Booking slot ID:", slotId);
 		setSelectedSlotId(slotId); // Set the ID of the slot to be booked
 		setBookingError(null); // Clear previous booking errors
 		setBookingSuccess(null); // Clear previous success message
-		setFriendCode('') // Clear previous form inputs
-		setMessage(''); // Clear previous form inputs
+
+		
+		// Check local storage for previously saved friend code
+		try {
+			const storedFriendCode = localStorage.getItem('friendCode');
+			console.log("Read from localStorage, storedFriendCode:", storedFriendCode);
+			if (storedFriendCode) {
+				// If found, update the component's state
+				setFriendCode(storedFriendCode); // Pre-fill the state vairable
+				console.log("Set friendCode state to:", storedFriendCode);
+			} else {
+				// If not found, ensure the state is cleared (redundant but safe)
+				setFriendCode('');
+			}
+			// We could also load the visitorBookingCode here if needed elsewhere later
+			// const storeVisitorCode = localStorage.getItem('visitorBookingCode');
+			// if (storeVisitorCode) {...}
+		} catch (storageError) {
+			console.warn("Could not read friend code from Local Storage:", storageError)
+			setFriendCode('');
+		}
+		// --- End Local Storage Check ---
+		setMessage('');
 	};
 
 
@@ -82,7 +94,12 @@ function AvailabilityDisplay(){
 
 	// Function called when the booking form is submitted
 	const handleBookingSubmit = async (event) => {
+		// Prevent default form behavior (page reload)
 		event.preventDefault();
+
+
+		// -- 1. Set Loading and clear Statuese --
+		// Update state to indicate the booking process has started
 		setIsBookingLoading(true);
 		setBookingError(null);
 		setBookingSuccess(null);
@@ -91,25 +108,94 @@ function AvailabilityDisplay(){
 		console.log(`Submitting booking for Slot ID: ${selectedSlotId}, Friend Code: ${friendCode}`);
 
 
-		// --- Placeholder for Fetch POST Request ---
-		// We will add the actual fetch logic here in the next step
+		// -- 2. Prepare Data for API Request --
+		// Create a JavaScript object containing the data the backend expects
+		const bookingData = {
+			slotId: selectedSlotId, // The ID of the slot the user cliked "Book" on
+			friendCode: friendCode, // The NS SW friend code user enters
+			message: message // The optional msg entered by user
+		};
+
+
+		// -- 3. Perform the API Call using fetch --
+		// 'try...catch' block handles potential errors during the fetch process
 		try {
-			// Simulate network request for now
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			// 'fetch' is the browser's built-in function for making HTTP requests.
+			// We 'await' its completion because it's asynchronous (doesn't happend instantly).
+			const response = await fetch('http://localhost:3001/api/bookings',{ // Target our backend endpoint
+				method:'POST', // Specify the HTTP method as POST (for creating data)
+				headers: {
+					// Headers tell the backend what kind of data we're sending
+					'Content-Type': 'application/json', // We are sending data in JSON format
+				},
+				// 'body' contains the actual data to send.
+				// 'JSON.stringify' converts our JavaScript 'bookingData' object into a JSON string.
+				body: JSON.stringify(bookingData),
+			});
 
-			//TODO: Replace simulation with actual fetch POST to /api/bookings
+
+			// -- 4. Handle the Backend's Response --
+			// 'response.ok' is a boolean: true if status code is 200-299 (success)
+			let errorMsg = `HTTP error! Status: ${response.status}`; // Default error
+			if (!response.ok){
+				// If the response status indicates and error (e.g., 400, 404, 409, 500)
+
+				try{
+					// Try to read the error message *sent by our backend* i nthe response body
+					const errorData = await response.json(); // Assuming backend sends { "error": "message" }
+					errorMsg = errorData.error || errorMsg; // Use backend message if available
+				} catch (parseError) {
+					// Ignore error if the response body wasn't valid JSON
+					console.warn("Could not parse error response JSON:", parseError);
+				
+				}
+				// Throw and error to jump to the 'catch' block below
+				throw new Error(errorMsg);
+			}
 
 
-			// --- Simulate Success ---
-			const simulatedVistorCode = "TEST" + Math.floor(Math.random() * 10000);
-			setBookingSuccess(`Booking successful! Your code: ${simulatedVistorCode}`);
-			setSelectedSlotId(null); // Close the form on success
-			//TODO: We also need to refresh the avaialbeSlots list here after real success
+			// If response.ok was true, parse the successful JSON response from the backend
+			const data = await response.json(); // Contains { message: "...", visitorBookingCode: "..."}
+
+
+			// -- 5. Update State on Success --
+			console.log("Booking successful:", data);
+			// Set the success message including the visitor code from the backend
+			setBookingSuccess(`Booking successful! Your code: ${data.visitorBookingCode}`);
+
+			try{
+				// Store the visitor's code in Local Storage for future use
+				// localStorage only stores strings.
+				localStorage.setItem('visitorBookingCode', data.visitorBookingCode);
+				// 'friendCode' here is the state variable holding what the user submitted
+				localStorage.setItem(`friendCode`, friendCode);
+				console.log("Saved user info to Local Storage");
+			} catch (storageError) {
+				// Handle potential errors if localStorage is disabled or full
+				console.warn("Could not save user ifo to Local Storage:", storageError);
+				// This is not critical, so we don't show an error to the user
+			}
+
+
+			setSelectedSlotId(null); // Close the form by clearing the selected ID
+			setFriendCode(''); // Clear the form field
+			setMessage(''); // Clear the form field
+
+
+			// --- IMPORTANT: Refresh list of available slots ---
+			fetchSlots();
+
+
 		} catch (err) {
-			console.error("Booking failed:", err);
+			// -- 6. Update State on Error --
+			// This block catches errors from fetch itself (network issues) or errors we threw above
+			console.error("Booking submission failed:", err);
+			// Set the error message to display to the user
 			setBookingError(err.message || "Booking failed. Please try again.");
 		} finally {
-			setIsBookingLoading(false);
+			// -- 7. Reset Loading State --
+			// This 'finally' block runs whether the 'try' succeeded or the 'catch' handled an error
+			setIsBookingLoading(false); // Set loading back to false
 		}
 	};
 	
