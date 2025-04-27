@@ -5,20 +5,20 @@ import React, {useState, useEffect, useCallback} from 'react';
 
 function AvailabilityDisplay(){
 	// State variables for the list of available slots
-	const [availableSlots, setAvailabilitySlots] = useState([]); //init as empty array
+	const [availableSlots, setAvailabilitySlots] = useState([]);  //init as empty array
 	// State to track loading status
-	const[isLoading, setIsLoading] = useState(true); // Start as true, loading initially
+	const[isLoading, setIsLoading] = useState(true);              // Start as true, loading initially
 	// State to store any fetch errors
-	const [error, setError] = useState(null); // Start with no error
+	const [error, setError] = useState(null);                     // Start with no error
 
 	// State for the booking process
-	const [selectedSlotId, setSelectedSlotId] = useState(null); // Track which slot ID is being booked
-	const [friendCode, setFriendCode] = useState(''); // Input for Friend Code
-	const [message, setMessage] = useState(''); // Input for Message
-	const [isBookingLoading, setIsBookingLoading] = useState(false); // Loading state for booking POST
-	const [bookingError, setBookingError] = useState(null); // Error state for booking POST
-	const [bookingSuccessMessage, setBookingSuccessMessage] = useState(null); // Holds the main success text
-	const [lastVisitorCode, setLastVisitorCode] = useState(null); // Holds the code from the LAST successful booking
+	const [selectedSlotId, setSelectedSlotId]               = useState(null);   // Track which slot ID is being booked
+	const [friendCode, setFriendCode]                       = useState('');     // Input for Friend Code
+	const [message, setMessage]                             = useState('');     // Input for Message
+	const [isBookingLoading, setIsBookingLoading]           = useState(false);  // Loading state for booking POST
+	const [bookingError, setBookingError]                   = useState(null);   // Error state for booking POST
+	const [bookingSuccessMessage, setBookingSuccessMessage] = useState(null);   // Holds the main success text
+	const [lastVisitorCode, setLastVisitorCode]             = useState(null);   // Holds the code from the LAST successful booking
 
 
 	// --- Define fetchSlots function using useCallback ---
@@ -55,9 +55,10 @@ function AvailabilityDisplay(){
 	// --- Function handleBookClick ---
 	const handleBookClick = (slotId) => {
 		console.log("Booking slot ID:", slotId);
-		setSelectedSlotId(slotId); // Set the ID of the slot to be booked
-		setBookingError(null); // Clear previous booking errors
-		setBookingSuccess(null); // Clear previous success message
+		setSelectedSlotId       (slotId);  // Set the ID of the slot to be booked
+		setBookingError         (null);    // Clear previous booking errors
+		setBookingSuccessMessage(null);    // Clear previous success message
+		setLastVisitorCode      (null);    // Clear previsous code
 
 		
 		// Check local storage for previously saved friend code
@@ -88,7 +89,7 @@ function AvailabilityDisplay(){
 	const handleCancelBooking = () => {
 		setSelectedSlotId(null); // Clear the selected slot ID
 		setBookingError(null);
-		setBookingSuccess(null);
+		setBookingSuccessMessage(null);
 	};
 
 
@@ -102,8 +103,6 @@ function AvailabilityDisplay(){
 		// Update state to indicate the booking process has started
 		setIsBookingLoading(true);
 		setBookingError(null);
-		setBookingSuccess(null);
-
 
 		console.log(`Submitting booking for Slot ID: ${selectedSlotId}, Friend Code: ${friendCode}`);
 
@@ -161,7 +160,8 @@ function AvailabilityDisplay(){
 			// -- 5. Update State on Success --
 			console.log("Booking successful:", data);
 			// Set the success message including the visitor code from the backend
-			setBookingSuccess(`Booking successful! Your code: ${data.visitorBookingCode}`);
+			setBookingSuccessMessage(`Booking successful! Please see details below.`);
+			setLastVisitorCode(data.visitorBookingCode); // Store the specific code
 
 			try{
 				// Store the visitor's code in Local Storage for future use
@@ -192,6 +192,8 @@ function AvailabilityDisplay(){
 			console.error("Booking submission failed:", err);
 			// Set the error message to display to the user
 			setBookingError(err.message || "Booking failed. Please try again.");
+			setBookingSuccessMessage(null); // Clear previous success message
+			setLastVisitorCode(null); // Clear previsous code
 		} finally {
 			// -- 7. Reset Loading State --
 			// This 'finally' block runs whether the 'try' succeeded or the 'catch' handled an error
@@ -300,10 +302,48 @@ function AvailabilityDisplay(){
 			{/* --- End Booking Form --- */}
 
 
-			{/* --- Display overall booking success message below the form area --- */}
-			{bookingSuccess && (
-				<div className="mt-4 p-3 bg-green-600 text-white rounded-md text-center">
-					{bookingSuccess}
+			{/* --- Booking Success Message Box (Rendered separately, below the form area) --- */}
+			{/* Show this box only if lastVisitorCode has a value (meaning last submit was a success) */}
+			{lastVisitorCode && (
+				<div className="mt-6 p-4 bg-green-700 rounded-lg border border-green-400 text-white shadow-lg">
+					{/* Add a title */}
+					<h3 className='text-xl font-bold text-center mb-3 text-green-200'>
+						Booking Confirmed (Action Required!)
+					</h3>
+
+
+					{/* Display the main success message */}
+					{bookingSuccessMessage && <p className='text-center mb-3 text-green-100'>{bookingSuccessMessage}</p>}
+
+
+					{/* Display the Visitor Code */}
+					<p className='text-center mb-2'>Your Visitor Code (Keep this safe!):</p>
+					<p className='text-center text-3xl font-mono font-bold bg-gray-800 py-2 px-4 rounded-md inline-block mx-auto mb-4 select-all'>
+						{/* select-all class makes it easy to copy */}
+						{lastVisitorCode}
+					</p>
+
+
+					{/* Display Host Contact Info and Instructions */}
+					{/* Define host info here or fetch/import from App.jsx if needed */}
+					{/* For simplicity here, we'll define it locally, but moving to App.jsx is better practice */}
+					<div className='mt-4 p-3 bg-green-800 rounded text-center text-sm'>
+						<p className='font-semibold mb-1 text-green-200'>Next Step: Final Confirmation</p>
+						<p className='text-green-300'>
+							To finalize this session, please send your Visitor Code ({lastVisitorCode}) to the host via Discord:
+						</p>
+						<p className='mt-1'>
+							<span className='font-mono bg-gray-900 px-2 py-1 rounded'>DISCORD_USERNAME#123</span>
+						</p>
+
+
+						<button
+							onClick={() => { setBookingSuccessMessage(null); setLastVisitorCode(null);}}
+							className='mt-4 block mx-auto bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-4 rounded text-xs'
+						>
+							Okay, Got it!
+						</button>
+					</div>
 				</div>
 			)}
 			{/* --- End Booking Success Message */}
