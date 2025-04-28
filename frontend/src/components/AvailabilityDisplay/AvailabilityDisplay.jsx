@@ -1,6 +1,6 @@
 // src/components/AvailabilityDisplay/AvailabilityDisplay.jsx
 import React, {useState, useEffect, useCallback, Fragment} from 'react';
-import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
 
 
 
@@ -306,87 +306,65 @@ function AvailabilityDisplay(){
 
 
 			{/* --- Headless UI Success Modal --- */}
-			<Transition appear show={isSuccessModalOpen} as={Fragment}>
-				{/* 'appear' makes it transition on initial mount */}
-				{/* 'show' controls visibility based on our state */}
-				{/* 'as={Fragment}' avoids adding extra divs for the Transition itself */}
-				<Dialog as='div' className="relative z-10" onClose={() => setIsSuccessModalOpen(false)}>
-					{/* 'onClose is called when clicking overlay or pressing Esc */}
-					{/* Background overlay with transition */}
-					<TransitionChild
-						as={Fragment}
-						enter     = 'ease-out duration-300'  // Classes during enter transition
-						enterFrom = 'opacity-0'
-						enterTo   = 'opacity-100'
-						leave     = 'ease-in duration-200'   //Classes during leave transition
-						leaveFrom = 'opacity-100'
-						leaveTo   = 'opacity-0'
+			{/* No longer need <Transition> component here */}
+			<Dialog open={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} className="relative z-50">
+				{/* The backdrop, with transition prop and classes */}
+				<DialogBackdrop
+					transition // Enable transition feature for backdrop
+					className="fixed inset-0 bg-black/30 duration-300 ease-out data-[closed]:opacity-0" // Use data-[closed] variant
+				/>
+
+
+				{/* Full-screen container to center the panel */}
+				<div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
+					{/* The actaul dialog panel, with transition prop and classes */}
+					<DialogPanel
+						transition // Enable transition feature for panel
+						className="w-full max-w-md transform space-y-4 overflow-hidden rounded-2xl bg-gray-800 border 	border-green-500 p-6 text-left align-middle shadow-xl duration-300 ease-out data-[closed]:scale-95 data-	[closed]:opacity-0" // Use data-[closed] variant for combined effect
 					>
-						<div className='fixed inset-0 bg-black bg-opacity-50'/> {/* The dimmed background */}
-					</TransitionChild>
+						{/* Dislog Title */}
+						<DialogTitle
+							as='h3'
+							className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
+						>
+							🎉 预约成功（还需要最后确认）🎉
+						</DialogTitle>
 
 
-					<div className='fixed inset-0 overflow-y-auto'> {/* Container to center modal */}
-						<div className='flex min-h-full items-center justify-center p-4 text-center'>
-							{/* Transition effect for modal panel */}
-							<TransitionChild
-								as={Fragment}
-								enter     = "ease-out duration-300"
-								enterFrom = "opacity-0 scale-95"     // Start slightly smaller and faded out
-								enterTo   = "opacity-100 scale-100"  // End at full size and opacity
-								leave     = "ease-in duration-200"
-								leaveFrom = "opacity-100 scale-100"
-								leaveTo   = "opacity-0 scale-95"     // Shrink slightly and fade out
-							>
-								{/* --- Modal Content Panel --- */}
-								<DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-800 border border-green-500 p-6 text-left align-middle shadow-xl transition-all">
-									<DialogTitle
-										as='h3'
-										className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
-									>
-										🎉 Booking Confirmed (Action Required!) 🎉
-									</DialogTitle>
-
-
-									{/* Display the Visitor Code */}
-									<div className='mt-2 text-center'>
-										<p className='text-sm text-gray-400 mb-1'>
-											Your Visitor Code (Keep this safe!)
-										</p>
-										<p className='text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all'>
-											{lastVisitorCode}
-										</p>
-									</div>
-
-
-									{/* Display Host Contact Info and Instructions */}
-
-									<div className='mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600'>
-										<p className='font-semibold mb-1 text-orange-300'>Final Confirmation</p>
-										<p className='text-gray-300'>
-											Please send you Visitor Code ({lastVisitorCode}) to me via Discord:
-										</p>
-										<p className='mt-1'>
-											<span className='font-mono bg-gray-900 px-2 py-1 rounded text-white'>				{hostContactInfo}</span>
-										</p>
-									</div>
-
-									{/* --- Close button --- */}
-									<div className='mt-6 text-center'>
-										<button
-											type='button'
-											className='inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900'
-											onClick={() => setIsSuccessModalOpen(false)} // Close the modal on click
-										>
-											Okay, Got it!
-										</button>
-									</div>
-								</DialogPanel>
-							</TransitionChild>
+						{/* Display the Visitor Code (no changes needed inside) */}
+						<div className='mt-2 text-center'>
+							<p className='text-sm text-gray-400 mb-1'>
+								请保管好您的数字ID（点击复制)
+							</p>
+							<p className='text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all'>
+								{lastVisitorCode}
+							</p>
 						</div>
-					</div>
-				</Dialog>
-			</Transition>
+
+						{/* Display Host Contact Info and Instructions (no changes needed inside) */}
+						<div className='mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600'>
+							<p className='font-semibold mb-1 text-orange-300'>Next Step: Final Confirmation</p>
+							<p className='text-gray-300'>
+								To finalize this session, please send your Visitor Code ({lastVisitorCode}) to the host via Discord:
+							</p>
+							<p className='mt-1'>
+								<span className='font-mono bg-gray-900 px-2 py-1 rounded text-white'>{hostContactInfo}</span>
+							</p>
+						</div>
+
+						{/* Close button (no changes needed inside) */}
+						<div className='mt-6 text-center'>
+							<button
+								type='button'
+								className='inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900'
+								onClick={() => setIsSuccessModalOpen(false)}
+							>
+								Okay, Got it!
+							</button>
+						</div>
+					</DialogPanel>
+				</div>
+			</Dialog>
 			{/* --- End Headless UI Success Modal --- */}
 		</div>
 	);
