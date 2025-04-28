@@ -1,6 +1,7 @@
-// src/components/AvailabilityDisplay/AvailabilityDisplay.jsx
 import React, {useState, useEffect, useCallback, Fragment} from 'react';
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
+import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
+import {formatDateHeader, formatTime} from '../../utils/dateUtils'
 
 
 
@@ -29,30 +30,6 @@ function AvailabilityDisplay(){
 	const [lastVisitorCode, setLastVisitorCode]       = useState(null);   // Holds the code from the LAST successful booking
 	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);  // For controlling hte success modal
 	const hostContactInfo                             = "DC#3511";        // To be moved later to props or context
-
-
-
-	// --- Helper Function formatDateHeader to return a consistent date string (e.g., "Thursday, SEptember 19, 2024")
-	const formatDateHeader = (dateString) => {
-		const date = new Date(dateString);
-		return new Intl.DateTimeFormat('zh-CN', {
-			weekday:'long',
-			year: 'numeric',
-			month:'long',
-			day: 'numeric'
-		}).format(date);
-	};
-	
-	
-	// --- Helper Function formatDate to return the time string (e.g., "2:30PM")
-	const formatTime = (dateString) => {
-		const date = new Date(dateString);
-		return new Intl.DateTimeFormat('zh-CN', {
-			hour12: true,
-			hour:'numeric',
-			minute: '2-digit',
-		}).format(date);
-	};
 
 
 	// --- Function fetchSlots using useCallback ---
@@ -324,11 +301,8 @@ function AvailabilityDisplay(){
 							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
 							<div className='space-y-4'>
 								{officialSchedule.regularSchedules?.nodes.map(shift => (
-									// Use optional chaning for potentially missing nested properties
-									<p key={shift.startTime}>
-										Regular Shift: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
-									</p> // Placeholder
-									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+									// Use optional chaining for potentially missing nested properties
+									<OfficialShiftCard key={shift.startTime} shift={shift}/> // Pass shift data as prop, use startTime as key									
 								))}
 							</div>
 						</div>
@@ -340,10 +314,7 @@ function AvailabilityDisplay(){
 							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
 							<div className="space-y-4">
 								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
-									<p key={shift.startTime}>
-										Big Run: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
-									</p> // Placeholder
-									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+									<OfficialShiftCard key={shift.startTime} shift={shift}/>
 								))}
 							</div>
 						</div>
@@ -357,11 +328,7 @@ function AvailabilityDisplay(){
 							<div className="space-y-4">
 								{officialSchedule.teamContestSchedules?.nodes.map(shift => (
 									// NOTE: Team Contest might have different 'setting' structure.
-									<p key={shift.startTime}>
-										Regular Shift: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
-									</p> // Placeholder
-									// Need to adapt card display slightly for team contest if needed
-									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+									<OfficialShiftCard key={shift.startTime} shift={shift}/>
 								))}
 							</div>
 						</div>
