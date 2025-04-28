@@ -1,7 +1,7 @@
 import React from "react";
 import {formatDateHeader, formatTime} from '../../utils/dateUtils'
 
-function OfficialShiftCard({ shift }) {
+function OfficialShiftCard({ shift, t, currentLocale }) {
     // Destructure shift data for easier access - with dsafe access using optional chaining!
     const startTime = shift?.startTime;
     const endTime   = shift?.endTime;
@@ -19,8 +19,8 @@ function OfficialShiftCard({ shift }) {
 
 
     // Format times for display
-    const formattedStartTime = formatDateHeader(startTime); // e.g., "9/19, 10:00AM"
-    const formattedEndTime = formatTime(endTime); // e.g., "11:00AM"
+    const formattedStartTime = formatDateHeader(startTime, currentLocale); // e.g., "9/19, 10:00AM"
+    const formattedEndTime = formatTime(endTime, currentLocale); // e.g., "11:00AM"
 
 
     return(
