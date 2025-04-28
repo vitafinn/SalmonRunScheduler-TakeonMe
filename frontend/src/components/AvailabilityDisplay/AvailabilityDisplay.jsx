@@ -34,6 +34,34 @@ function AvailabilityDisplay(){
 	const hostContactInfo                                     = "DC#3511";        // To be moved later to props or context
 
 
+	// --- Helper function to check for overlap ---
+	const checkShiftOverlap = (shiftStartTime, shiftEndTime, hostSlots) => {
+		// Convert shift boundaries to Date objects for comparison
+		const shiftStart = new Date(shiftStartTime);
+		const shiftEnd = new Date(shiftEndTime);
+
+
+		// Use .some() to check if AT LEAST ONE host slot overlaps
+		// .some() stops checking as soon as it finds a match (efficient)
+		return hostSlots.some(hostSlot => {
+			const hostStart = new Date(hostSlot.start_time);
+			const hostEnd = new Date(hostSlot.end_time);
+
+
+			// Overlap condition:
+			// Host slot starts BEFORE shift ends AND Host slot ends AFTER shift starts
+			const overlaps = hostStart < shiftEnd && hostEnd > shiftStart;
+
+
+			// Debugging log
+			if (overlaps) {
+				console.log(`Overlap found: Shift ${shiftStart.toISOString()}-${shiftEnd.toISOString()} overlaps with Host Slot ${hostStart.toISOString()}-${hostEnd.toISOString()}`);
+			}
+			return overlaps;
+		});
+	};
+
+
 	// --- Function fecth data ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
@@ -331,15 +359,23 @@ function AvailabilityDisplay(){
 						<div>
 							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
 							<div className='space-y-4'>
-								{officialSchedule.regularSchedules?.nodes.map(shift => (
-									// Use optional chaining for potentially missing nested properties
-									<OfficialShiftCard
-										key={shift.startTime}
-										shift={shift} // Pass shift data as prop, use startTime as key			
-										t={t}
-										currentLocale = {currentLocale} // Locale from hook
-									/>
-								))}
+								{officialSchedule.regularSchedules?.nodes.map(shift => {
+									// Calculate overlap for this shift
+									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
+									
+									return(
+										<OfficialShiftCard
+											key={shift.startTime}
+											shift={shift} // Pass shift data as prop, use startTime as key			
+											t={t}
+											currentLocale = {currentLocale} // Locale from hook
+											// --- Pass new props ---
+											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
+											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
+										/>
+									);
+								}
+							)}
 							</div>
 						</div>
 					)}
