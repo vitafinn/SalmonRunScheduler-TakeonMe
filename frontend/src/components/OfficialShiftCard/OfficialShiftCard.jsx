@@ -56,7 +56,7 @@ function OfficialShiftCard({ shift, t, currentLocale }) {
                 <p className="text-xs text-gray-400 mb-1 font-semibold">Weapons</p>
                 <div className="flex space-x-1">
                     {weapons?.map((weapon, index) => (
-                        <div key={weapon?.name || index} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
+                        <div key={`${weapon?.name || 'unknown'} - ${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
                             <img
                                 src={weapon?.image?.url}
                                 alt={weapon?.name || `Weapon ${index + 1}`}
