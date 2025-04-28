@@ -22,8 +22,30 @@ function AvailabilityDisplay(){
 	const [isSuccessModalOpen, setIsSuccessModalOpen]       = useState(false);  // For controlling hte success modal
 
 
+	// --- Helper Function formatDateHeader to return a consistent date string (e.g., "Thursday, SEptember 19, 2024")
+	const formatDateHeader = (dateString) => {
+		const date = new Date(dateString);
+		return new Intl.DateTimeFormat('zh-CN', {
+			weekday:'narrow',
+			year: '2-digit',
+			month:'long',
+			day: 'numeric'
+		}).format(date);
+	};
+	
+	
+	// --- Helper Function formatDate to return the time string (e.g., "2:30PM")
+	const formatTime = (dateString) => {
+		const date = new Date(dateString);
+		return new Intl.DateTimeFormat('zh-CN', {
+			hour:'numeric',
+			minute: '2-digit',
+			hour12: true
+		}).format(date);
+	};
 
-	// --- Define fetchSlots function using useCallback ---
+
+	// --- Function fetchSlots using useCallback ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
 	const fetchSlots = useCallback(async () => {
@@ -223,15 +245,31 @@ function AvailabilityDisplay(){
 					{availableSlots.map((slot) => (
 						<li key = {slot.id} className='bg-gray-600 p-3 rounded-md flex justify-between items-center'>
 							<span className='text-white'>
-								{/* Basic formatting, improve later if needed */}
-								{new Date(slot.start_time).toLocaleString()} - {new Date(slot.end_time).toLocaleString()}
+								{/* --- Slot Time logic --- */}
+								{new Intl.DateTimeFormat('zh-CN', {
+           							// month: 'short', // Optional: 'short' (Sep), 'long' (September), 'numeric' (9)
+           							// day: 'numeric', // Optional: Show day number
+									month: 'short',
+									day: 'numeric',
+									hour: 'numeric', // 'numeric' (9), '2-digit' (09)
+									minute: '2-digit', 
+									hour12: true
+								}).format(new Date(slot.start_time))}
+								{" - "}
+								{new Intl.DateTimeFormat('zh-CN', {
+									// Only need time for the end time if it's the same day
+									hour: 'numeric',
+									minute: '2-digit',
+									//hour12: true
+								}).format(new Date(slot.end_time))}
+								{/* --- End Slot Time logic --- */}
 							</span>
 							<button
 								onClick={() => handleBookClick(slot.id)} 
 								className='bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm'
 								disabled={isBookingLoading || selectedSlotId === slot.id} // Disable if booking is in progress or this slot is selected
 							>
-								Book
+								预约
 							</button>
 						</li>
 					))}
