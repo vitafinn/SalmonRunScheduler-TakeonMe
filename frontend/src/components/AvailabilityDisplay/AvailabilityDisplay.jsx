@@ -1,109 +1,117 @@
-import React, {useState, useEffect, useCallback, Fragment} from 'react';
+import React, {useState, useEffect, useCallback, Fragment, use} from 'react';
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
-import {formatDateHeader, formatTime} from '../../utils/dateUtils'
+import {formatDateHeader as dataUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
+import { useTranslations } from '../../hooks/useTranslations';
 
 
 
 function AvailabilityDisplay(){
-	// State variables for the list of available slots
+	// --- Get Translation Stuff from Hook ---
+	const { currentLocale, changeLocale, t, isLoadingLocale, localeError } = useTranslations();
+
+	// --- State for Host Slots ---
 	const [availableSlots, setAvailableSlots] = useState([]);           //init as empty array
-	// State to track loading status
 	const[isLoadingHostSlots, setIsLoadingHostSlots] = useState(true);  // Start as true, loading initially
-	// State to store any fetch errors
 	const [hostSlotsError, setHostSlotsError] = useState(null);         // Start with no error
 
 
-	// State for Official Schedule
+	// --- State for Official Schedule ---
 	const [officialSchedule, setOfficialSchedule]                   = useState(null);  // Store coopGroupingSchedule object
 	const [isLoadingOfficialSchedule, setIsLoadingOfficialSchedule] = useState(true);  //Loading state for external API
 	const [officialScheduleError, setOfficialScheduleError]         = useState(null);  // Error state for external API
-	const[expandedShiftStartTime, setExpandedShiftStartTime]        = useState(null);  // Track clicked/expanded shift
 
 
-	// State for the booking process
-	const [selectedSlotId, setSelectedSlotId]         = useState(null);   // Track which slot ID is being booked
-	const [friendCode, setFriendCode]                 = useState('');     // Input for Friend Code
-	const [message, setMessage]                       = useState('');     // Input for Message
-	const [isBookingLoading, setIsBookingLoading]     = useState(false);  // Loading state for booking POST
-	const [bookingError, setBookingError]             = useState(null);   // Error state for booking POST
-	const [lastVisitorCode, setLastVisitorCode]       = useState(null);   // Holds the code from the LAST successful booking
-	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);  // For controlling hte success modal
-	const hostContactInfo                             = "DC#3511";        // To be moved later to props or context
+	// --- State for  UI Interaction ---
+	const [expandedShiftStartTime, setExpandedShiftStartTime] = useState(null);   // Track clicked/expanded shift
+	const [selectedSlotId, setSelectedSlotId]                 = useState(null);   // Track which slot ID is being booked
+	const [friendCode, setFriendCode]                         = useState('');     // Input for Friend Code
+	const [message, setMessage]                               = useState('');     // Input for Message
+	const [isBookingLoading, setIsBookingLoading]             = useState(false);  // Loading state for booking POST
+	const [bookingError, setBookingError]                     = useState(null);   // Error state for booking POST
+	const [lastVisitorCode, setLastVisitorCode]               = useState(null);   // Holds the code from the LAST successful booking
+	const [isSuccessModalOpen, setIsSuccessModalOpen]         = useState(false);  // For controlling hte success modal
+	const hostContactInfo                                     = "DC#3511";        // To be moved later to props or context
 
 
-	// --- Function fetchSlots using useCallback ---
+	// --- Function fecth data ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
-	const fetchAllData = useCallback(async () => {
-		// Set loading states for both fetches
+	const fetchSchedulesAndHostSlots = useCallback(async () => {
+		// Set ALL loading states true
 		setIsLoadingHostSlots(true);
 		setIsLoadingOfficialSchedule(true);
 		setHostSlotsError(null);
 		setOfficialScheduleError(null);
+
+		// Debug: temp clear data on new fetch attempt
+		setAvailableSlots([]); // Clear data visually during load
+		setOfficialSchedule(null);
 		console.log("Fetching host availability and official schedule...");
+		
 
+		let hostData = null; // Declare variables outside try
+		let officialDataRaw = null; // To store the raw response
+		let proccessedSchedule = null;
 
+		
 		try {
-			// Use Promise.all to fetch concurrently
 			const [hostResponse, officialResponse] = await Promise.all([
-				fetch('http://localhost:3001/api/availability'),     // Our backend
-				fetch('https://splatoon3.ink/data/schedules.json')  // Ink Api
+				fetch('http://localhost:3001/api/availability'),       // Our backend
+				fetch('https://splatoon3.ink/data/schedules.json'),     // Ink Api
 			]);
-			
-
-			// --- Process Host Availability Response ---
-			if (!hostResponse.ok){
-				throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);
-			}
-			const hostData = await hostResponse.json();
-			setAvailableSlots(hostData); // Update state for host slots
-			console.log("Host availability fetched:", hostData.length, "slots");
-			setIsLoadingHostSlots(false);
 
 
-			// --- Process Official Schedule Response ---
-			if (!officialResponse.ok){
-				throw new Error(`Pulling Official Schedule Error! Status: ${scheduleResponse.status}`);
-			}
-			const officialData = await officialResponse.json();
-			// Extract only the Salmon Run shifts
-			if (officialData.data?.coopGroupingSchedule){
-				setOfficialSchedule(officialData.data.coopGroupingSchedule);
-				console.log("Ink api SR schedule fetched successfully.")
+			// --- Check BOTH responses first ---
+			if (!hostResponse.ok){throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);}
+			if (!officialResponse.ok){throw new Error(`Official Schedule fetch failed: ${scheduleResponse.status}`);}
+
+
+			// --- Parse BOTH responses ---
+			// Assign to the variables declared outside
+			hostData = await hostResponse.json();
+			officialDataRaw = await officialResponse.json();
+
+
+			// --- Process Official Schedule Data ---
+			if (officialDataRaw.data?.coopGroupingSchedule) {
+				proccessedSchedule = officialDataRaw.data.coopGroupingSchedule; // Stroe processed data
+				console.log("Official schedule proccessed successfully");
 			} else {
-				// Handle cases where the expected structure isn't found
-				console.error("Unexpected structure in official schedule data:", officialData);
-				throw new Error("Could not find Salmon Run schedule in official data")
+				throw new Error("Could not find SR schedule in ooficial data")
 			}
-			setIsLoadingOfficialSchedule(false);
+
+
+			// --- Update State AFTER all processing is successul ---
+			setAvailableSlots(hostData);
+			setOfficialSchedule(proccessedSchedule);
+			console.log("Host availability and official schedule states updated.");
 
 
 		} catch (err) {
-			console.error("Error fetching data:", err);
-			// Determine which fetch failed if possible, or set a general error
-        	// For simplicity, we'll set both errors if Promise.all fails,
-        	// or specific errors if one response was checked before the throw
-			if (!officialSchedule) setOfficialScheduleError(err.message);
-			if (availableSlots.length === 0) setHostSlotsError(err.message); // Only set if still empty
-			setBookingError(err.message); // Keep general error state? Or remove if using specific ones.
 
-			setHostSlotsError(err.message);
-			setAvailableSlots([]); // Clear slots on error
+			console.error("Error during fetch or processing:", err);
+			// Set general error states, assuming either fetch might have failed
+			setHostSlotsError(`Failed to load data: ${err.message}`);
+			setOfficialScheduleError(`Failed to load data: ${err.message}`);
+
+			// Clear any potentially partial data
+			setAvailableSlots([]);
+			setOfficialSchedule(null);
 		} finally {
-			// Ensure loading state are false on error
 			setIsLoadingHostSlots(false);
 			setIsLoadingOfficialSchedule(false);
+			console.log("Fetch function finished.")
 		}
-	}, []); // Empty dependency array: function definition doesn't depend on props/state 
+	}, []); // Dependencies might need adjustment
 
 
-	// --- useEffect to fetch slots on mount ---
+	// --- useEffect now only calls fetchSchedulesAndHostSlots ---
 	useEffect(() => {
 		// Call the function defined above when the component mounts
-		fetchAllData();
+		fetchSchedulesAndHostSlots();
 
-		// Check local storage for previously saved friend code
+		// --- loadStorage Load Logic ---
 		try {
 			const storedFriendCode = localStorage.getItem('friendCode');
 			console.log("Read from localStorage, storedFriendCode:", storedFriendCode);
@@ -122,9 +130,9 @@ function AvailabilityDisplay(){
 			console.warn("Could not read friend code from Local Storage:", storageError)
 			setFriendCode('');
 		}
-		// --- End Local Storage Check ---
+		// --- End Local Storage Logic ---
 		
-	}, [fetchAllData]); // Include fetchSlots in dependency array as per linting rules with useCallback
+	}, []); // Include fetchSlots in dependency array as per linting rules with useCallback. Or potentially just [] if fetch doesn't need deps
 
 
 	// --- Function handleBookClick ---
@@ -144,6 +152,17 @@ function AvailabilityDisplay(){
 		setSelectedSlotId(null); // Clear the selected slot ID
 		setBookingError(null);
 		setBookingSuccessMessage(null);
+	};
+
+
+	// Now we just need the dateUtils functions
+	const formatDateHeader = (dateString) => {
+		// Use imported function, passing currentLocale from the hook
+		return dateUtilsFormatDateHeader(dateString, currentLocale);
+	};
+	const formatTime = (dateString) => {
+		// Use imported function, passing currentLocale from the hook
+		return dateUtilsFormatTime(dateString, currentLocale);
 	};
 
 
@@ -279,21 +298,33 @@ function AvailabilityDisplay(){
 
 			{/* --- Display Area for Slots List --- */}
 			{/* --- Title --- */}
-			<h2 className='text-lg font-semibold mb-4 text-cyan-300'>
-				Official Schedule & My Availability
-			</h2>
+			<div className='flex justify-between items-center mb-4'>
+				<h2 className='text-lg font-semibold mb-4 text-cyan-300'>
+					Official Schedule & My Availability
+				</h2>
+				{/* Use changeLocale from the hook */}
+				<button
+					onClick={() => changeLocale(currentLocale === 'en-US' ? 'zh-CN' : 'en-US')}
+					className='text-sm bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded'
+					disabled={isLoadingLocale} // Disable based on hook's loading state
+					title='Switch Language'
+				>
+					{currentLocale === 'en-US' ? '中文' : 'English'}
+				</button>
+			</div>
 
-
-			{/* --- Loading / Error States for *both* fetches --- */}
-			{(isLoadingHostSlots || isLoadingOfficialSchedule) && (
+			
+			{/* --- Loading/Error States for *both* fetches --- */}
+			{(isLoadingHostSlots || isLoadingOfficialSchedule || isLoadingLocale) && (
 				<p className='text-gray-400'>Loading schedules...</p>
 			)}
 			{hostSlotsError && <p className='text-red-400'>Error loading my availability: {hostSlotsError}</p>}
 			{officialScheduleError && <p className='text-red-400'>Error loading official schedule: {officialScheduleError}</p>}
+			{localeError && <p className='text-red-400'>Error loading language data: {localeError}</p>}
 
 
 			{/* --- Display Official Schedules (Only if both loaded successfully) --- */}
-			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !hostSlotsError && !officialScheduleError && officialSchedule && (
+			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && (
 				<div className='space-y-6'>
 					{/* --- Section for Regular Schedules --- */}
 					{officialSchedule.regularSchedules?.nodes?.length > 0 && (
@@ -302,7 +333,12 @@ function AvailabilityDisplay(){
 							<div className='space-y-4'>
 								{officialSchedule.regularSchedules?.nodes.map(shift => (
 									// Use optional chaining for potentially missing nested properties
-									<OfficialShiftCard key={shift.startTime} shift={shift}/> // Pass shift data as prop, use startTime as key									
+									<OfficialShiftCard
+										key={shift.startTime}
+										shift={shift} // Pass shift data as prop, use startTime as key			
+										t={t}
+										currentLocale = {currentLocale} // Locale from hook
+									/>
 								))}
 							</div>
 						</div>
@@ -314,7 +350,12 @@ function AvailabilityDisplay(){
 							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
 							<div className="space-y-4">
 								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
-									<OfficialShiftCard key={shift.startTime} shift={shift}/>
+									<OfficialShiftCard 
+										key={shift.startTime}
+										shift={shift} // Pass shift data as prop, use startTime as key			
+										t={t}
+										currentLocale = {currentLocale} // Locale from hook
+									/>
 								))}
 							</div>
 						</div>
@@ -326,9 +367,13 @@ function AvailabilityDisplay(){
 						<div>
 							<h3 className="text-xl font-semibold text-purple-400 mb-3">Team Contest</h3>
 							<div className="space-y-4">
-								{officialSchedule.teamContestSchedules?.nodes.map(shift => (
-									// NOTE: Team Contest might have different 'setting' structure.
-									<OfficialShiftCard key={shift.startTime} shift={shift}/>
+								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
+									<OfficialShiftCard 
+										key={shift.startTime}
+										shift={shift} // Pass shift data as prop, use startTime as key			
+										t={t}
+										currentLocale = {currentLocale} // Locale from hook
+									/>
 								))}
 							</div>
 						</div>
@@ -339,9 +384,6 @@ function AvailabilityDisplay(){
 					!officialSchedule.teamContestSchedules?.nodes?.length && (
 						<p className='text-gray-400'>No upcoming Salmon Run schedules found in the Ink api data</p>
 					)}
-
-
-
 				</div>
 			)}
 			{/* --- End Display Area for Slots List --- */}
@@ -351,7 +393,7 @@ function AvailabilityDisplay(){
 			{expandedShiftStartTime && (
 				<div className='mt-6 p-4 bg-gray-600 rounded-lg border border-yellow-500'>
 					<h3 className='text-lg font-semibold mb-2 text-yellow-300'>
-						Your Available Slots for Shift starting {formatDateHeader(expandedShiftStartTime)} {/* Example usage */}
+						Your Available Slots for Shift starting {formatDateHeader(expandedShiftStartTime, currentLocale)} {/* Example usage */}
 					</h3>
 					{/* TODO: Filter availableSlots based on expandedShiftStartTime and render the list + book buttons */}
 					<p className='text-gray-400'>(Detailed slots will appear here)</p>
