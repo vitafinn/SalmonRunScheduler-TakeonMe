@@ -1,5 +1,6 @@
 // src/components/AvailabilityDisplay/AvailabilityDisplay.jsx
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, Fragment} from 'react';
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 
 
 
@@ -17,8 +18,9 @@ function AvailabilityDisplay(){
 	const [message, setMessage]                             = useState('');     // Input for Message
 	const [isBookingLoading, setIsBookingLoading]           = useState(false);  // Loading state for booking POST
 	const [bookingError, setBookingError]                   = useState(null);   // Error state for booking POST
-	const [bookingSuccessMessage, setBookingSuccessMessage] = useState(null);   // Holds the main success text
 	const [lastVisitorCode, setLastVisitorCode]             = useState(null);   // Holds the code from the LAST successful booking
+	const [isSuccessModalOpen, setIsSuccessModalOpen]       = useState(false);  // For controlling hte success modal
+
 
 
 	// --- Define fetchSlots function using useCallback ---
@@ -55,11 +57,10 @@ function AvailabilityDisplay(){
 	// --- Function handleBookClick ---
 	const handleBookClick = (slotId) => {
 		console.log("Booking slot ID:", slotId);
-		setSelectedSlotId       (slotId);  // Set the ID of the slot to be booked
-		setBookingError         (null);    // Clear previous booking errors
-		setBookingSuccessMessage(null);    // Clear previous success message
-		setLastVisitorCode      (null);    // Clear previsous code
-
+		setSelectedSlotId     (slotId);  // Set the ID of the slot to be booked
+		setBookingError       (null);    // Clear previous booking errors
+		setLastVisitorCode    (null);    // Clear previsous code
+		setIsSuccessModalOpen (false);   // Clear Success Modal state
 		
 		// Check local storage for previously saved friend code
 		try {
@@ -160,8 +161,8 @@ function AvailabilityDisplay(){
 			// -- 5. Update State on Success --
 			console.log("Booking successful:", data);
 			// Set the success message including the visitor code from the backend
-			setBookingSuccessMessage(`Booking successful! Please see details below.`);
 			setLastVisitorCode(data.visitorBookingCode); // Store the specific code
+			setIsSuccessModalOpen(true);
 
 			try{
 				// Store the visitor's code in Local Storage for future use
@@ -181,7 +182,6 @@ function AvailabilityDisplay(){
 			setFriendCode(''); // Clear the form field
 			setMessage(''); // Clear the form field
 
-
 			// --- IMPORTANT: Refresh list of available slots ---
 			fetchSlots();
 
@@ -192,8 +192,8 @@ function AvailabilityDisplay(){
 			console.error("Booking submission failed:", err);
 			// Set the error message to display to the user
 			setBookingError(err.message || "Booking failed. Please try again.");
-			setBookingSuccessMessage(null); // Clear previous success message
-			setLastVisitorCode(null); // Clear previsous code
+			setLastVisitorCode   (null);   // Clear previsous code
+			setIsSuccessModalOpen(false);  //Ensure modal is closed on error
 		} finally {
 			// -- 7. Reset Loading State --
 			// This 'finally' block runs whether the 'try' succeeded or the 'catch' handled an error
@@ -201,9 +201,12 @@ function AvailabilityDisplay(){
 		}
 	};
 	
-	
+	const hostContactInfo = "DC_USRNAME#1234"; // To be moved later to props or context
+
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
+
+			{/* --- Title --- */}
 			<h2 className='text-2xl font-semibold mb-4 text-cyan-300'> 
 				Available Slots 
 			</h2>
@@ -302,52 +305,89 @@ function AvailabilityDisplay(){
 			{/* --- End Booking Form --- */}
 
 
-			{/* --- Booking Success Message Box (Rendered separately, below the form area) --- */}
-			{/* Show this box only if lastVisitorCode has a value (meaning last submit was a success) */}
-			{lastVisitorCode && (
-				<div className="mt-6 p-4 bg-green-700 rounded-lg border border-green-400 text-white shadow-lg">
-					{/* Add a title */}
-					<h3 className='text-xl font-bold text-center mb-3 text-green-200'>
-						Booking Confirmed (Action Required!)
-					</h3>
+			{/* --- Headless UI Success Modal --- */}
+			<Transition appear show={isSuccessModalOpen} as={Fragment}>
+				{/* 'appear' makes it transition on initial mount */}
+				{/* 'show' controls visibility based on our state */}
+				{/* 'as={Fragment}' avoids adding extra divs for the Transition itself */}
+				<Dialog as='div' className="relative z-10" onClose={() => setIsSuccessModalOpen(false)}>
+					{/* 'onClose is called when clicking overlay or pressing Esc */}
+					{/* Background overlay with transition */}
+					<TransitionChild
+						as={Fragment}
+						enter     = 'ease-out duration-300'  // Classes during enter transition
+						enterFrom = 'opacity-0'
+						enterTo   = 'opacity-100'
+						leave     = 'ease-in duration-200'   //Classes during leave transition
+						leaveFrom = 'opacity-100'
+						leaveTo   = 'opacity-0'
+					>
+						<div className='fixed inset-0 bg-black bg-opacity-50'/> {/* The dimmed background */}
+					</TransitionChild>
 
 
-					{/* Display the main success message */}
-					{bookingSuccessMessage && <p className='text-center mb-3 text-green-100'>{bookingSuccessMessage}</p>}
+					<div className='fixed inset-0 overflow-y-auto'> {/* Container to center modal */}
+						<div className='flex min-h-full items-center justify-center p-4 text-center'>
+							{/* Transition effect for modal panel */}
+							<TransitionChild
+								as={Fragment}
+								enter     = "ease-out duration-300"
+								enterFrom = "opacity-0 scale-95"     // Start slightly smaller and faded out
+								enterTo   = "opacity-100 scale-100"  // End at full size and opacity
+								leave     = "ease-in duration-200"
+								leaveFrom = "opacity-100 scale-100"
+								leaveTo   = "opacity-0 scale-95"     // Shrink slightly and fade out
+							>
+								{/* --- Modal Content Panel --- */}
+								<DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-800 border border-green-500 p-6 text-left align-middle shadow-xl transition-all">
+									<DialogTitle
+										as='h3'
+										className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
+									>
+										🎉 Booking Confirmed (Action Required!) 🎉
+									</DialogTitle>
 
 
-					{/* Display the Visitor Code */}
-					<p className='text-center mb-2'>Your Visitor Code (Keep this safe!):</p>
-					<p className='text-center text-3xl font-mono font-bold bg-gray-800 py-2 px-4 rounded-md inline-block mx-auto mb-4 select-all'>
-						{/* select-all class makes it easy to copy */}
-						{lastVisitorCode}
-					</p>
+									{/* Display the Visitor Code */}
+									<div className='mt-2 text-center'>
+										<p className='text-sm text-gray-400 mb-1'>
+											Your Visitor Code (Keep this safe!)
+										</p>
+										<p className='text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all'>
+											{lastVisitorCode}
+										</p>
+									</div>
 
 
-					{/* Display Host Contact Info and Instructions */}
-					{/* Define host info here or fetch/import from App.jsx if needed */}
-					{/* For simplicity here, we'll define it locally, but moving to App.jsx is better practice */}
-					<div className='mt-4 p-3 bg-green-800 rounded text-center text-sm'>
-						<p className='font-semibold mb-1 text-green-200'>Next Step: Final Confirmation</p>
-						<p className='text-green-300'>
-							To finalize this session, please send your Visitor Code ({lastVisitorCode}) to the host via Discord:
-						</p>
-						<p className='mt-1'>
-							<span className='font-mono bg-gray-900 px-2 py-1 rounded'>DISCORD_USERNAME#123</span>
-						</p>
+									{/* Display Host Contact Info and Instructions */}
 
+									<div className='mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600'>
+										<p className='font-semibold mb-1 text-orange-300'>Final Confirmation</p>
+										<p className='text-gray-300'>
+											Please send you Visitor Code ({lastVisitorCode}) to me via Discord:
+										</p>
+										<p className='mt-1'>
+											<span className='font-mono bg-gray-900 px-2 py-1 rounded text-white'>				{hostContactInfo}</span>
+										</p>
+									</div>
 
-						<button
-							onClick={() => { setBookingSuccessMessage(null); setLastVisitorCode(null);}}
-							className='mt-4 block mx-auto bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-4 rounded text-xs'
-						>
-							Okay, Got it!
-						</button>
+									{/* --- Close button --- */}
+									<div className='mt-6 text-center'>
+										<button
+											type='button'
+											className='inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900'
+											onClick={() => setIsSuccessModalOpen(false)} // Close the modal on click
+										>
+											Okay, Got it!
+										</button>
+									</div>
+								</DialogPanel>
+							</TransitionChild>
+						</div>
 					</div>
-				</div>
-			)}
-			{/* --- End Booking Success Message */}
-
+				</Dialog>
+			</Transition>
+			{/* --- End Headless UI Success Modal --- */}
 		</div>
 	);
 }
