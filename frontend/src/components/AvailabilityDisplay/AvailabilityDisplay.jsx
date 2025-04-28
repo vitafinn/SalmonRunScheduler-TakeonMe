@@ -241,39 +241,61 @@ function AvailabilityDisplay(){
 				<p className='text-gray-400'>No available slots found at the moment.</p>
 			)}
 			{!isLoading && !error && availableSlots.length > 0 && (
-				<ul className='space-y-3'> {/* List only shows if slots exist */}
-					{availableSlots.map((slot) => (
-						<li key = {slot.id} className='bg-gray-600 p-3 rounded-md flex justify-between items-center'>
-							<span className='text-white'>
-								{/* --- Slot Time logic --- */}
-								{new Intl.DateTimeFormat('zh-CN', {
-           							// month: 'short', // Optional: 'short' (Sep), 'long' (September), 'numeric' (9)
-           							// day: 'numeric', // Optional: Show day number
-									month: 'short',
-									day: 'numeric',
-									hour: 'numeric', // 'numeric' (9), '2-digit' (09)
-									minute: '2-digit', 
-									hour12: true
-								}).format(new Date(slot.start_time))}
-								{" - "}
-								{new Intl.DateTimeFormat('zh-CN', {
-									// Only need time for the end time if it's the same day
-									hour: 'numeric',
-									minute: '2-digit',
-									//hour12: true
-								}).format(new Date(slot.end_time))}
-								{/* --- End Slot Time logic --- */}
-							</span>
-							<button
-								onClick={() => handleBookClick(slot.id)} 
-								className='bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm'
-								disabled={isBookingLoading || selectedSlotId === slot.id} // Disable if booking is in progress or this slot is selected
-							>
-								预约
-							</button>
-						</li>
-					))}
-				</ul>
+				<div className='space-y-6'> {/* Add vertical space between date groups */}
+					{
+						// --- Grouping Logic using reduce ---
+						Object.entries( // 1. Get[key, value] paris from the grouped object
+							availableSlots.reduce((groups, slot) => {
+								// 2. For each slot, get the date part (YYYY-MM-DD) as the key
+								const dateKey = slot.start_time.split('T')[0]; // Simple split on 'T'
+
+
+								// 3. If this dateKey isn't in groups yet, create an empty array for it
+								if (!groups[dateKey]) {
+									groups[dateKey] = [];
+								}
+								// 4. Push the current slot into the array for its dateKey
+								groups[dateKey].push(slot);
+
+
+								// 5. Return the modified groups object for the next iteration
+								return groups;
+							}, {}) // 6. Start with an empty object {} as the initial value for the groups	
+						)
+						// --- End Grouping Logic ---
+						
+						// 7. Map over the [dateKey, slotsArray] pairs
+						.map(([dateKey, slotsInGroup]) => (
+							// 8. For each group, render a section with a key
+							<div key={dateKey}>
+								{/* 9. Render the Date Header */}
+								<h3 className='text-lg font-semibold text-orange-300 mb-2 border-b border-gray-600 pb-1'>
+									{formatDateHeader(dateKey)} {/* Use helper function */}
+								</h3>
+								{/* 10. Render the list of slots for *this* group */}
+								<ul className='space-y-2'>
+									{slotsInGroup.map((slot) => (
+										// 11. Render each slot item (similar before)
+										<li key={slot.id} className='bg-gray-600 p-3 rounded-md flex justify-between items-center'>
+											<span className='text-white font-medium'>
+												{/* 12. Use formatTime for start and end */}
+												{formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+											</span>
+											<button
+												onClick={() => handleBookClick(slot.id)}
+												className='bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm'
+												disabled={isBookingLoading || selectedSlotId === slot.id}
+											>
+												预约
+											</button>
+										</li>
+									))}
+								</ul>
+							</div>
+						))
+						// --- End Rendering Logic ---
+					}
+				</div>
 			)}
 			{/* --- End Display Area for Slots List --- */}
 
