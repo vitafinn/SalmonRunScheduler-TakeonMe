@@ -43,38 +43,54 @@ function AvailabilityDisplay(){
 		setIsLoadingOfficialSchedule(true);
 		setHostSlotsError(null);
 		setOfficialScheduleError(null);
+
+		// Debug: temp clear data on new fetch attempt
+		setAvailableSlots([]); // Clear data visually during load
+		setOfficialSchedule(null);
 		console.log("Fetching host availability and official schedule...");
+		
+
+		let hostData = null; // Declare variables outside try
+		let officialDataRaw = null; // To store the raw response
+		let proccessedSchedule = null;
+
+		
 		try {
-			// Use Promise.all to fetch concurrently
 			const [hostResponse, officialResponse] = await Promise.all([
 				fetch('http://localhost:3001/api/availability'),       // Our backend
 				fetch('https://splatoon3.ink/data/schedules.json'),     // Ink Api
 			]);
-			// --- Process Host Availability Response ---
-			if (!hostResponse.ok){
-				throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);
-			}
-			const hostData = await hostResponse.json();
-			setAvailableSlots(hostData); // Update state for host slots
-			setOfficialSchedule(officialData.data.coopGroupingSchedule);
-			console.log("Host availability fetched:", hostData.length, "slots");
 
 
-			// --- Process Official Schedule Response ---
-			if (!officialResponse.ok){
-				throw new Error(`Official Schedule fetch failed: ${scheduleResponse.status}`);
-			}
-			const officialData = await officialResponse.json();
-			// Extract only the Salmon Run shifts
-			if (officialData.data?.coopGroupingSchedule){
-				setOfficialSchedule(officialData.data.coopGroupingSchedule);
-				console.log("Official SR schedule fetched successfully.")
+			// --- Check BOTH responses first ---
+			if (!hostResponse.ok){throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);}
+			if (!officialResponse.ok){throw new Error(`Official Schedule fetch failed: ${scheduleResponse.status}`);}
+
+
+			// --- Parse BOTH responses ---
+			// Assign to the variables declared outside
+			hostData = await hostResponse.json();
+			officialDataRaw = await officialResponse.json();
+
+
+			// --- Process Official Schedule Data ---
+			if (officialDataRaw.data?.coopGroupingSchedule) {
+				proccessedSchedule = officialDataRaw.data.coopGroupingSchedule; // Stroe processed data
+				console.log("Official schedule proccessed successfully");
 			} else {
-				// Handle cases where the expected structure isn't found
-				console.error("Unexpected structure in official schedule data:", officialData);
-				throw new Error("Could not find Salmon Run schedule in official data")
+				throw new Error("Could not find SR schedule in ooficial data")
 			}
+
+
+			// --- Update State AFTER all processing is successul ---
+			setAvailableSlots(hostData);
+			setOfficialSchedule(proccessedSchedule);
+			console.log("Host availability and official schedule states updated.");
+
+
 		} catch (err) {
+
+			console.error("Error during fetch or processing:", err);
 			// Set general error states, assuming either fetch might have failed
 			setHostSlotsError(`Failed to load data: ${err.message}`);
 			setOfficialScheduleError(`Failed to load data: ${err.message}`);
@@ -85,6 +101,7 @@ function AvailabilityDisplay(){
 		} finally {
 			setIsLoadingHostSlots(false);
 			setIsLoadingOfficialSchedule(false);
+			console.log("Fetch function finished.")
 		}
 	}, []); // Dependencies might need adjustment
 
