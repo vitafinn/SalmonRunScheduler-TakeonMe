@@ -6,20 +6,30 @@ import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/re
 
 function AvailabilityDisplay(){
 	// State variables for the list of available slots
-	const [availableSlots, setAvailabilitySlots] = useState([]);  //init as empty array
+	const [availableSlots, setAvailableSlots] = useState([]);           //init as empty array
 	// State to track loading status
-	const[isLoading, setIsLoading] = useState(true);              // Start as true, loading initially
+	const[isLoadingHostSlots, setIsLoadingHostSlots] = useState(true);  // Start as true, loading initially
 	// State to store any fetch errors
-	const [error, setError] = useState(null);                     // Start with no error
+	const [hostSlotsError, setHostSlotsError] = useState(null);         // Start with no error
+
+
+	// State for Official Schedule
+	const [officialSchedule, setOfficialSchedule]                   = useState(null);  // Store coopGroupingSchedule object
+	const [isLoadingOfficialSchedule, setIsLoadingOfficialSchedule] = useState(true);  //Loading state for external API
+	const [officialScheduleError, setOfficialScheduleError]         = useState(null);  // Error state for external API
+	const[expandedShiftStartTime, setExpandedShiftStartTime]        = useState(null);  // Track clicked/expanded shift
+
 
 	// State for the booking process
-	const [selectedSlotId, setSelectedSlotId]               = useState(null);   // Track which slot ID is being booked
-	const [friendCode, setFriendCode]                       = useState('');     // Input for Friend Code
-	const [message, setMessage]                             = useState('');     // Input for Message
-	const [isBookingLoading, setIsBookingLoading]           = useState(false);  // Loading state for booking POST
-	const [bookingError, setBookingError]                   = useState(null);   // Error state for booking POST
-	const [lastVisitorCode, setLastVisitorCode]             = useState(null);   // Holds the code from the LAST successful booking
-	const [isSuccessModalOpen, setIsSuccessModalOpen]       = useState(false);  // For controlling hte success modal
+	const [selectedSlotId, setSelectedSlotId]         = useState(null);   // Track which slot ID is being booked
+	const [friendCode, setFriendCode]                 = useState('');     // Input for Friend Code
+	const [message, setMessage]                       = useState('');     // Input for Message
+	const [isBookingLoading, setIsBookingLoading]     = useState(false);  // Loading state for booking POST
+	const [bookingError, setBookingError]             = useState(null);   // Error state for booking POST
+	const [lastVisitorCode, setLastVisitorCode]       = useState(null);   // Holds the code from the LAST successful booking
+	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);  // For controlling hte success modal
+	const hostContactInfo                             = "DC#3511";        // To be moved later to props or context
+
 
 
 	// --- Helper Function formatDateHeader to return a consistent date string (e.g., "Thursday, SEptember 19, 2024")
@@ -48,23 +58,65 @@ function AvailabilityDisplay(){
 	// --- Function fetchSlots using useCallback ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
-	const fetchSlots = useCallback(async () => {
-		console.log("Fetching available slots..."); // Added log
-		setIsLoading(true);
-		setError(null);
+	const fetchAllData = useCallback(async () => {
+		// Set loading states for both fetches
+		setIsLoadingHostSlots(true);
+		setIsLoadingOfficialSchedule(true);
+		setHostSlotsError(null);
+		setOfficialScheduleError(null);
+		console.log("Fetching host availability and official schedule...");
+
+
 		try {
-			const response = await fetch('http://localhost:3001/api/availability');
-			if (!response.ok){
-				throw new Error(`HTTP error! Status: ${response.status}`);
+			// Use Promise.all to fetch concurrently
+			const [hostResponse, officialResponse] = await Promise.all([
+				fetch('http://localhost:3001/api/availability'),     // Our backend
+				fetch('https://splatoon3.ink/data/schedules.json')  // Ink Api
+			]);
+			
+
+			// --- Process Host Availability Response ---
+			if (!hostResponse.ok){
+				throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);
 			}
-			const data = await response.json();
-			setAvailabilitySlots(data);
+			const hostData = await hostResponse.json();
+			setAvailableSlots(hostData); // Update state for host slots
+			console.log("Host availability fetched:", hostData.length, "slots");
+			setIsLoadingHostSlots(false);
+
+
+			// --- Process Official Schedule Response ---
+			if (!officialResponse.ok){
+				throw new Error(`Pulling Official Schedule Error! Status: ${scheduleResponse.status}`);
+			}
+			const officialData = await officialResponse.json();
+			// Extract only the Salmon Run shifts
+			if (officialData.data?.coopGroupingSchedule){
+				setOfficialSchedule(officialData.data.coopGroupingSchedule);
+				console.log("Ink api SR schedule fetched successfully.")
+			} else {
+				// Handle cases where the expected structure isn't found
+				console.error("Unexpected structure in official schedule data:", officialData);
+				throw new Error("Could not find Salmon Run schedule in official data")
+			}
+			setIsLoadingOfficialSchedule(false);
+
+
 		} catch (err) {
-			console.error("Error fetching available slots:", err);
-			setError(err.message);
-			setAvailabilitySlots([]); // Clear slots on error
+			console.error("Error fetching data:", err);
+			// Determine which fetch failed if possible, or set a general error
+        	// For simplicity, we'll set both errors if Promise.all fails,
+        	// or specific errors if one response was checked before the throw
+			if (!officialSchedule) setOfficialScheduleError(err.message);
+			if (availableSlots.length === 0) setHostSlotsError(err.message); // Only set if still empty
+			setBookingError(err.message); // Keep general error state? Or remove if using specific ones.
+
+			setHostSlotsError(err.message);
+			setAvailableSlots([]); // Clear slots on error
 		} finally {
-			setIsLoading(false);
+			// Ensure loading state are false on error
+			setIsLoadingHostSlots(false);
+			setIsLoadingOfficialSchedule(false);
 		}
 	}, []); // Empty dependency array: function definition doesn't depend on props/state 
 
@@ -72,18 +124,8 @@ function AvailabilityDisplay(){
 	// --- useEffect to fetch slots on mount ---
 	useEffect(() => {
 		// Call the function defined above when the component mounts
-		fetchSlots();
-	}, [fetchSlots]); // Include fetchSlots in dependency array as per linting rules with useCallback
+		fetchAllData();
 
-
-	// --- Function handleBookClick ---
-	const handleBookClick = (slotId) => {
-		console.log("Booking slot ID:", slotId);
-		setSelectedSlotId     (slotId);  // Set the ID of the slot to be booked
-		setBookingError       (null);    // Clear previous booking errors
-		setLastVisitorCode    (null);    // Clear previsous code
-		setIsSuccessModalOpen (false);   // Clear Success Modal state
-		
 		// Check local storage for previously saved friend code
 		try {
 			const storedFriendCode = localStorage.getItem('friendCode');
@@ -104,6 +146,18 @@ function AvailabilityDisplay(){
 			setFriendCode('');
 		}
 		// --- End Local Storage Check ---
+		
+	}, [fetchAllData]); // Include fetchSlots in dependency array as per linting rules with useCallback
+
+
+	// --- Function handleBookClick ---
+	const handleBookClick = (slotId) => {
+		console.log("Booking slot ID:", slotId);
+		setSelectedSlotId     (slotId);  // Set the ID of the slot to be booked
+		setBookingError       (null);    // Clear previous booking errors
+		setLastVisitorCode    (null);    // Clear previsous code
+		setIsSuccessModalOpen (false);   // Clear Success Modal state
+
 		setMessage('');
 	};
 
@@ -205,7 +259,7 @@ function AvailabilityDisplay(){
 			setMessage(''); // Clear the form field
 
 			// --- IMPORTANT: Refresh list of available slots ---
-			fetchSlots();
+			fetchAllData();
 
 
 		} catch (err) {
@@ -222,8 +276,17 @@ function AvailabilityDisplay(){
 			setIsBookingLoading(false); // Set loading back to false
 		}
 	};
-	
-	const hostContactInfo = "DC_USRNAME#1234"; // To be moved later to props or context
+
+	console.log('rendering check:', {
+		isLoadingHostSlots,
+		isLoadingOfficialSchedule,
+		hostSlotsError,
+		officialScheduleError,
+		officialScheduleExists: !!officialSchedule,
+		availableSlotsLength: availableSlots.length
+	});
+	console.log(' --- official schedule content ---')
+	console.log(officialSchedule);
 
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
@@ -238,70 +301,95 @@ function AvailabilityDisplay(){
 
 
 			{/* --- Display Area for Slots List --- */}
-			{isLoading && <p className='text-gray-400'>Loading available slots...</p>}
-			{error && <p className='text-red-400'>Error loading slots: {error}</p>}
-			{!isLoading && !error && availableSlots.length === 0 && (
-				<p className='text-gray-400'>No available slots found at the moment.</p>
+			{/* --- Title --- */}
+			<h2 className='text-lg font-semibold mb-4 text-cyan-300'>
+				Official Schedule & My Availability
+			</h2>
+
+
+			{/* --- Loading / Error States for *both* fetches --- */}
+			{(isLoadingHostSlots || isLoadingOfficialSchedule) && (
+				<p className='text-gray-400'>Loading schedules...</p>
 			)}
-			{!isLoading && !error && availableSlots.length > 0 && (
-				<div className='space-y-6'> {/* Add vertical space between date groups */}
-					{
-						// --- Grouping Logic using reduce ---
-						Object.entries( // 1. Get[key, value] paris from the grouped object
-							availableSlots.reduce((groups, slot) => {
-								// 2. For each slot, get the date part (YYYY-MM-DD) as the key
-								const dateKey = slot.start_time.split('T')[0]; // Simple split on 'T'
+			{hostSlotsError && <p className='text-red-400'>Error loading my availability: {hostSlotsError}</p>}
+			{officialScheduleError && <p className='text-red-400'>Error loading official schedule: {officialScheduleError}</p>}
 
 
-								// 3. If this dateKey isn't in groups yet, create an empty array for it
-								if (!groups[dateKey]) {
-									groups[dateKey] = [];
-								}
-								// 4. Push the current slot into the array for its dateKey
-								groups[dateKey].push(slot);
-
-
-								// 5. Return the modified groups object for the next iteration
-								return groups;
-							}, {}) // 6. Start with an empty object {} as the initial value for the groups	
-						)
-						// --- End Grouping Logic ---
-
-						// 7. Map over the [dateKey, slotsArray] pairs
-						.map(([dateKey, slotsInGroup]) => (
-							// 8. For each group, render a section with a key
-							<div key={dateKey}>
-								{/* 9. Render the Date Header */}
-								<h3 className='text-lg font-semibold text-orange-300 mb-2 border-b border-gray-600 pb-1'>
-									{formatDateHeader(dateKey)} {/* Use helper function */}
-								</h3>
-								{/* 10. Render the list of slots for *this* group */}
-								<ul className='space-y-2'>
-									{slotsInGroup.map((slot) => (
-										// 11. Render each slot item (similar before)
-										<li key={slot.id} className='bg-gray-600 p-3 rounded-md flex justify-between items-center'>
-											<span className='text-white font-medium'>
-												{/* 12. Use formatTime for start and end */}
-												{formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-											</span>
-											<button
-												onClick={() => handleBookClick(slot.id)}
-												className='bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm'
-												disabled={isBookingLoading || selectedSlotId === slot.id}
-											>
-												预约
-											</button>
-										</li>
-									))}
-								</ul>
+			{/* --- Display Official Schedules (Only if both loaded successfully) --- */}
+			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !hostSlotsError && !officialScheduleError && officialSchedule && (
+				<div className='space-y-6'>
+					{/* --- Section for Regular Schedules --- */}
+					{officialSchedule.regularSchedules?.nodes?.length > 0 && (
+						<div>
+							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
+							<div className='space-y-4'>
+								{officialSchedule.regularSchedules?.nodes.map(shift => (
+									// Use optional chaning for potentially missing nested properties
+									<p key={shift.startTime}>
+										Regular Shift: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
+									</p> // Placeholder
+									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+								))}
 							</div>
-						))
-						// --- End Rendering Logic ---
-					}
+						</div>
+					)}
+
+					{/* --- Section for Big Run --- */}
+					{officialSchedule.bigRunSchedules?.nodes?.length > 0 && (
+						<div>
+							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
+							<div className="space-y-4">
+								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
+									<p key={shift.startTime}>
+										Big Run: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
+									</p> // Placeholder
+									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+								))}
+							</div>
+						</div>
+					)}
+
+
+					{/* --- Section for Team Contest --- */}
+					{officialSchedule.teamContestSchedules?.nodes?.length > 0 && (
+						<div>
+							<h3 className="text-xl font-semibold text-purple-400 mb-3">Team Contest</h3>
+							<div className="space-y-4">
+								{officialSchedule.teamContestSchedules?.nodes.map(shift => (
+									// NOTE: Team Contest might have different 'setting' structure.
+									<p key={shift.startTime}>
+										Regular Shift: {shift.setting?.coopStage?.name ?? 'Unknown Stage'} ({shift.startTime})
+									</p> // Placeholder
+									// Need to adapt card display slightly for team contest if needed
+									// <OfficialShiftCard shift={shift} hostAvailability={availableSlots} onExpand={handleExpandShift} /> // TODO: Use this later
+								))}
+							</div>
+						</div>
+					)}
+					{/* If no schedules found at all */}
+					{!officialSchedule.regularSchedules?.nodes?.length && 
+					!officialSchedule.bigRunSchedules?.nodes?.length && 
+					!officialSchedule.teamContestSchedules?.nodes?.length && (
+						<p className='text-gray-400'>No upcoming Salmon Run schedules found in the Ink api data</p>
+					)}
+
+
+
 				</div>
 			)}
 			{/* --- End Display Area for Slots List --- */}
 
+
+			{/* --- Detail View for Expanded Shift (Placeholder) */}
+			{expandedShiftStartTime && (
+				<div className='mt-6 p-4 bg-gray-600 rounded-lg border border-yellow-500'>
+					<h3 className='text-lg font-semibold mb-2 text-yellow-300'>
+						Your Available Slots for Shift starting {formatDateHeader(expandedShiftStartTime)} {/* Example usage */}
+					</h3>
+					{/* TODO: Filter availableSlots based on expandedShiftStartTime and render the list + book buttons */}
+					<p className='text-gray-400'>(Detailed slots will appear here)</p>
+				</div>
+			)}
 			
 			{/* --- Booking Form (Rendered separately, below the list area) --- */}
 			{selectedSlotId !== null && ( // Only show form if a slot is selected
