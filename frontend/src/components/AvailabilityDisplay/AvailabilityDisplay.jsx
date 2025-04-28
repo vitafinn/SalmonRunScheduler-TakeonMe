@@ -26,8 +26,8 @@ function AvailabilityDisplay(){
 	const formatDateHeader = (dateString) => {
 		const date = new Date(dateString);
 		return new Intl.DateTimeFormat('zh-CN', {
-			weekday:'narrow',
-			year: '2-digit',
+			weekday:'long',
+			year: 'numeric',
 			month:'long',
 			day: 'numeric'
 		}).format(date);
@@ -38,9 +38,9 @@ function AvailabilityDisplay(){
 	const formatTime = (dateString) => {
 		const date = new Date(dateString);
 		return new Intl.DateTimeFormat('zh-CN', {
+			hour12: true,
 			hour:'numeric',
 			minute: '2-digit',
-			hour12: true
 		}).format(date);
 	};
 
@@ -230,8 +230,11 @@ function AvailabilityDisplay(){
 
 			{/* --- Title --- */}
 			<h2 className='text-2xl font-semibold mb-4 text-cyan-300'> 
-				Available Slots 
+				可预约的时间
 			</h2>
+			<p className='text-lg font-semibold text-orange-300 mb-2'> 
+				当地时间
+			</p>
 
 
 			{/* --- Display Area for Slots List --- */}
@@ -263,7 +266,7 @@ function AvailabilityDisplay(){
 							}, {}) // 6. Start with an empty object {} as the initial value for the groups	
 						)
 						// --- End Grouping Logic ---
-						
+
 						// 7. Map over the [dateKey, slotsArray] pairs
 						.map(([dateKey, slotsInGroup]) => (
 							// 8. For each group, render a section with a key
