@@ -75,13 +75,13 @@ function AvailabilityDisplay(){
 				throw new Error("Could not find Salmon Run schedule in official data")
 			}
 		} catch (err) {
-			console.error("Error fetching schedules/host data:", err);
-			// Determine which fetch failed if possible, or set a general error
-        	// For simplicity, we'll set both errors if Promise.all fails,
-        	// or specific errors if one response was checked before the throw
-			if (!officialSchedule) setOfficialScheduleError(err.message);
-			if (availableSlots.length === 0) setHostSlotsError(err.message); // Only set if still empty
-			setAvailableSlots([]); // Clear slots on error
+			// Set general error states, assuming either fetch might have failed
+			setHostSlotsError(`Failed to load data: ${err.message}`);
+			setOfficialScheduleError(`Failed to load data: ${err.message}`);
+
+			// Clear any potentially partial data
+			setAvailableSlots([]);
+			setOfficialSchedule(null);
 		} finally {
 			setIsLoadingHostSlots(false);
 			setIsLoadingOfficialSchedule(false);
