@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback, Fragment, use} from 'react';
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
-import {formatDateHeader as dataUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
+import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
 import { useTranslations } from '../../hooks/useTranslations';
 
 
@@ -32,6 +32,34 @@ function AvailabilityDisplay(){
 	const [lastVisitorCode, setLastVisitorCode]               = useState(null);   // Holds the code from the LAST successful booking
 	const [isSuccessModalOpen, setIsSuccessModalOpen]         = useState(false);  // For controlling hte success modal
 	const hostContactInfo                                     = "DC#3511";        // To be moved later to props or context
+
+
+	// --- Helper function to check for overlap ---
+	const checkShiftOverlap = (shiftStartTime, shiftEndTime, hostSlots) => {
+		// Convert shift boundaries to Date objects for comparison
+		const shiftStart = new Date(shiftStartTime);
+		const shiftEnd = new Date(shiftEndTime);
+
+
+		// Use .some() to check if AT LEAST ONE host slot overlaps
+		// .some() stops checking as soon as it finds a match (efficient)
+		return hostSlots.some(hostSlot => {
+			const hostStart = new Date(hostSlot.start_time);
+			const hostEnd = new Date(hostSlot.end_time);
+
+
+			// Overlap condition:
+			// Host slot starts BEFORE shift ends AND Host slot ends AFTER shift starts
+			const overlaps = hostStart < shiftEnd && hostEnd > shiftStart;
+
+
+			// Debugging log
+			if (overlaps) {
+				console.log(`Overlap found: Shift ${shiftStart.toISOString()}-${shiftEnd.toISOString()} overlaps with Host Slot ${hostStart.toISOString()}-${hostEnd.toISOString()}`);
+			}
+			return overlaps;
+		});
+	};
 
 
 	// --- Function fecth data ---
@@ -331,15 +359,21 @@ function AvailabilityDisplay(){
 						<div>
 							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
 							<div className='space-y-4'>
-								{officialSchedule.regularSchedules?.nodes.map(shift => (
-									// Use optional chaining for potentially missing nested properties
-									<OfficialShiftCard
-										key={shift.startTime}
-										shift={shift} // Pass shift data as prop, use startTime as key			
-										t={t}
-										currentLocale = {currentLocale} // Locale from hook
-									/>
-								))}
+								{officialSchedule.regularSchedules?.nodes.map(shift => {
+									// Calculate overlap for this shift
+									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
+									return(
+										<OfficialShiftCard
+											key={shift.startTime}
+											shift={shift} // Pass shift data as prop, use startTime as key			
+											t={t}
+											currentLocale = {currentLocale} // Locale from hook
+											// --- Pass new props ---
+											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
+											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
+										/>
+									);
+								})};
 							</div>
 						</div>
 					)}
@@ -349,14 +383,21 @@ function AvailabilityDisplay(){
 						<div>
 							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
 							<div className="space-y-4">
-								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
-									<OfficialShiftCard 
-										key={shift.startTime}
-										shift={shift} // Pass shift data as prop, use startTime as key			
-										t={t}
-										currentLocale = {currentLocale} // Locale from hook
-									/>
-								))}
+								{officialSchedule.regularSchedules?.nodes.map(shift => {
+									// Calculate overlap for this shift
+									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
+									return(
+										<OfficialShiftCard
+											key={shift.startTime}
+											shift={shift} // Pass shift data as prop, use startTime as key			
+											t={t}
+											currentLocale = {currentLocale} // Locale from hook
+											// --- Pass new props ---
+											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
+											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
+										/>
+									);
+								})};
 							</div>
 						</div>
 					)}
@@ -367,14 +408,21 @@ function AvailabilityDisplay(){
 						<div>
 							<h3 className="text-xl font-semibold text-purple-400 mb-3">Team Contest</h3>
 							<div className="space-y-4">
-								{officialSchedule.bigRunSchedules?.nodes.map(shift => (
-									<OfficialShiftCard 
-										key={shift.startTime}
-										shift={shift} // Pass shift data as prop, use startTime as key			
-										t={t}
-										currentLocale = {currentLocale} // Locale from hook
-									/>
-								))}
+								{officialSchedule.regularSchedules?.nodes.map(shift => {
+									// Calculate overlap for this shift
+									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
+									return(
+										<OfficialShiftCard
+											key={shift.startTime}
+											shift={shift} // Pass shift data as prop, use startTime as key			
+											t={t}
+											currentLocale = {currentLocale} // Locale from hook
+											// --- Pass new props ---
+											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
+											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
+										/>
+									);
+								})};
 							</div>
 						</div>
 					)}
