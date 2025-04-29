@@ -17,6 +17,9 @@ backend/*.db
 backend/*.log
 frontend/*.log
 
+#secrets
+secrets/
+
 # Environment variables (VERY IMPORTANT!)
 .env
 backend/.env
