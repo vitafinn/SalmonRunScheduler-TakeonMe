@@ -69,10 +69,10 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
                             <div key={`${weapon?.name || 'unknown'} - ${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
                                 <img
                                     src={weapon?.image?.url}
-                                    alt={weapon?.name || `Weapon ${index + 1}`}
-                                    title={weapon?.name || `Weapon ${index + 1}`} // Tooltip on hover
-                                    className="w-full h-full object-contain" // object-contain keeps aspect ration
-                                    onError={(e) => { e.target.src = '';/* Show placeholder or hide on error */}}
+                                    alt={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`}
+                                    title={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`} // Tooltip on hover
+                                    className="w-full h-full object-contain" // object-contain keeps aspect ratio
+                                    onError={(e) => { e.target.src = '';}}
                                 />
                             </div>
                         ))}
