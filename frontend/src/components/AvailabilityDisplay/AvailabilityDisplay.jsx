@@ -3,6 +3,7 @@ import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/re
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
 import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
 import { useTranslations } from '../../hooks/useTranslations';
+import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 
 
 
@@ -517,6 +518,20 @@ function AvailabilityDisplay(){
 				</div>
 			)}
 			{/* --- End Booking Form --- */}
+
+
+			{/* Shift Detail Modal */}
+			<ShiftDetailModal
+				isOpen={isDetailModalOpen}
+				onClose={() => setIsDetailModalOpen(false)}
+				shiftData={detailShiftData}
+				hostAvailability={availableSlots}
+				t={t}
+				currentLocale={currentLocale}
+				handleBookClick={handleBookClick}
+				selectedSlotId={selectedSlotId}
+				isBookingLoading={isBookingLoading}
+			/>
 
 
 			{/* --- Headless UI Success Modal --- */}
