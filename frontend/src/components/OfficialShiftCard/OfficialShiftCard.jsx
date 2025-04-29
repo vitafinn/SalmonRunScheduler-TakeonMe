@@ -24,9 +24,9 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
     // Define base and highlight styles
-    const baseCardClasses = "flex items-center p-3 bg-gray-800 rounded-lg border border-gray-700 shadow-md space-x-4 transition-all duration-200";
-    const highlightClasses = "border-yellow-400 border-2 scale-[1.02] shadow-yellow-500/30 shadow-lg cursor-pointer hover:bg-gray-700"; // Added scale, shadow, cursor, hover
-    const nonHighlightClasses = "opacity-60"; // Dim non-available shifts slightly
+    const baseCardClasses = "items-center p-3 bg-gray-800 rounded-lg border shadow-md space-x-4 transition-all duration-200";
+    const highlightClasses = "border-yellow-400 border-[3px] scale-[1.02] shadow-yellow-500/50 shadow-lg cursor-pointer bg-gray-700 hover:bg-slate-600"; // Added scale, shadow, cursor, hover
+    const nonHighlightClasses = "opacity-80 border-gray-700"; // Dim non-available shifts slightly
 
 
     return(
@@ -47,7 +47,7 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
                 {/* Middle Section: Time and Stage Name */}
-                <div className="flex-grow">
+                <div className="flex-grow flex-shrink basis-0 flex flex-col justify-center h-20">
                     <p className="text-sm font-semibold text-orange-300">
                         {formattedStartTime} - {formattedEndTime}
                     </p>

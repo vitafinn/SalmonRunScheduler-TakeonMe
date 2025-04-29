@@ -373,7 +373,7 @@ function AvailabilityDisplay(){
 											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
 										/>
 									);
-								})};
+								})}
 							</div>
 						</div>
 					)}
