@@ -117,8 +117,8 @@ export function useTranslations() {
 
 
     // --- Translation function 't' ---
-    const t = useCallback((category, id, fallbackText) => {
-        let idToLookup = KeyboardEvent; //By default, assume key is the ID 
+    const t = useCallback((category, key, fallbackText) => {
+        let idToLookup = key; //By default, assume key is the ID 
 
 
         // --- Special handling for weapons ---
