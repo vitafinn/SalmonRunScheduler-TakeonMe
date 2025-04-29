@@ -17,8 +17,7 @@ backend/*.db
 backend/*.log
 frontend/*.log
 
-#secrets
-secrets/
+
 
 # Environment variables (VERY IMPORTANT!)
 .env
@@ -34,3 +33,7 @@ Thumbs.db
 # Optional: IDE/Editor directories
 .vscode/
 .idea/
+
+# Custom
+secrets/
+inbox.docx
