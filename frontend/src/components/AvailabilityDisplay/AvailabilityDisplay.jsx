@@ -315,7 +315,8 @@ function AvailabilityDisplay(){
 	});
 	console.log(' --- official schedule content ---')
 	console.log(officialSchedule);
-
+	// debug
+	console.log("Rendering with currentLocale:", currentLocale);
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
 
