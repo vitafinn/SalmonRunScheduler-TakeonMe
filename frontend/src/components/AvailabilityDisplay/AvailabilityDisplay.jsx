@@ -3,6 +3,7 @@ import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/re
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
 import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
 import { useTranslations } from '../../hooks/useTranslations';
+import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 
 
 
@@ -23,7 +24,10 @@ function AvailabilityDisplay(){
 
 
 	// --- State for  UI Interaction ---
-	const [expandedShiftStartTime, setExpandedShiftStartTime] = useState(null);   // Track clicked/expanded shift
+	//const [expandedShiftStartTime, setExpandedShiftStartTime] = useState(null);   // Track clicked/expanded shift
+	const [isDetailModalOpen, setIsDetailModalOpen]           = useState(false);
+	const [detailShiftData, setDetailShiftData]               = useState(null);
+
 	const [selectedSlotId, setSelectedSlotId]                 = useState(null);   // Track which slot ID is being booked
 	const [friendCode, setFriendCode]                         = useState('');     // Input for Friend Code
 	const [message, setMessage]                               = useState('');     // Input for Message
@@ -311,7 +315,8 @@ function AvailabilityDisplay(){
 	});
 	console.log(' --- official schedule content ---')
 	console.log(officialSchedule);
-
+	// debug
+	console.log("Rendering with currentLocale:", currentLocale);
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
 
@@ -362,18 +367,32 @@ function AvailabilityDisplay(){
 								{officialSchedule.regularSchedules?.nodes.map(shift => {
 									// Calculate overlap for this shift
 									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
+
+
+									// Define the click handler for *this* specific shift
+									const handleExpandClick = () => {
+										if (hasOverlap) {
+											console.log("Expanding shift:", shift.startTime);
+											setDetailShiftData(shift); // Store the whole shift object
+											setIsDetailModalOpen(true); // Open the detail modal
+											// Clear any booking form state if a new shift is expanded
+											setSelectedSlotId(null);
+											setBookingError(null);
+										}
+									};
+
+
 									return(
 										<OfficialShiftCard
 											key={shift.startTime}
-											shift={shift} // Pass shift data as prop, use startTime as key			
+											shift={shift}		
 											t={t}
 											currentLocale = {currentLocale} // Locale from hook
-											// --- Pass new props ---
-											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
-											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
+											hasOverlap={hasOverlap}
+											onExpand={handleExpandClick} // Handler function
 										/>
 									);
-								})};
+								})}
 							</div>
 						</div>
 					)}
@@ -435,19 +454,8 @@ function AvailabilityDisplay(){
 				</div>
 			)}
 			{/* --- End Display Area for Slots List --- */}
-
-
-			{/* --- Detail View for Expanded Shift (Placeholder) */}
-			{expandedShiftStartTime && (
-				<div className='mt-6 p-4 bg-gray-600 rounded-lg border border-yellow-500'>
-					<h3 className='text-lg font-semibold mb-2 text-yellow-300'>
-						Your Available Slots for Shift starting {formatDateHeader(expandedShiftStartTime, currentLocale)} {/* Example usage */}
-					</h3>
-					{/* TODO: Filter availableSlots based on expandedShiftStartTime and render the list + book buttons */}
-					<p className='text-gray-400'>(Detailed slots will appear here)</p>
-				</div>
-			)}
 			
+
 			{/* --- Booking Form (Rendered separately, below the list area) --- */}
 			{selectedSlotId !== null && ( // Only show form if a slot is selected
 				<div className="mt-6 p-4 bg-gray-600 rounded-lg border border-cyan-500">
@@ -511,6 +519,20 @@ function AvailabilityDisplay(){
 				</div>
 			)}
 			{/* --- End Booking Form --- */}
+
+
+			{/* Shift Detail Modal */}
+			<ShiftDetailModal
+				isOpen={isDetailModalOpen}
+				onClose={() => setIsDetailModalOpen(false)}
+				shiftData={detailShiftData}
+				hostAvailability={availableSlots}
+				t={t}
+				currentLocale={currentLocale}
+				handleBookClick={handleBookClick}
+				selectedSlotId={selectedSlotId}
+				isBookingLoading={isBookingLoading}
+			/>
 
 
 			{/* --- Headless UI Success Modal --- */}

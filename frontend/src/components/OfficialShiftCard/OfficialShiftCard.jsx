@@ -24,9 +24,9 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
     // Define base and highlight styles
-    const baseCardClasses = "flex items-center p-3 bg-gray-800 rounded-lg border border-gray-700 shadow-md space-x-4 transition-all duration-200";
-    const highlightClasses = "border-yellow-400 border-2 scale-[1.02] shadow-yellow-500/30 shadow-lg cursor-pointer hover:bg-gray-700"; // Added scale, shadow, cursor, hover
-    const nonHighlightClasses = "opacity-60"; // Dim non-available shifts slightly
+    const baseCardClasses = "items-center p-3 bg-gray-800 rounded-lg border shadow-md space-x-4 transition-all duration-200";
+    const highlightClasses = "border-yellow-400 border-[3px] scale-[1.02] shadow-yellow-500/50 shadow-lg cursor-pointer bg-gray-700 hover:bg-slate-600"; // Added scale, shadow, cursor, hover
+    const nonHighlightClasses = "opacity-80 border-gray-700"; // Dim non-available shifts slightly
 
 
     return(
@@ -47,16 +47,18 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
                 {/* Middle Section: Time and Stage Name */}
-                <div className="flex-grow">
+                <div className="flex-grow flex-shrink basis-0 flex flex-col justify-center h-20">
                     <p className="text-sm font-semibold text-orange-300">
                         {formattedStartTime} - {formattedEndTime}
                     </p>
                     <p className="text-lg font-bold text-white mt-1">
-                        {stage?.name || 'Unknown Stage'}
+                        {t('stages', stage?.id, stage?.name) || 'Unknown Stage'}
                     </p>
                     {/* Show King Salmonid */}
                     {boss?.name &&(
-                        <p className="text-xs text-gray-400 mt-1">King Salmonid: {boss.name}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            King Salmonid: {t('bosses', boss?.id, boss?.name) || boss?.name}
+                        </p>
                     )}
                 </div>
 
@@ -65,17 +67,24 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
                 <div className="flex flex-col items-center space-y-1 flex-shrink-0">
                     <p className="text-xs text-gray-400 mb-1 font-semibold">Weapons</p>
                     <div className="flex space-x-1">
-                        {weapons?.map((weapon, index) => (
-                            <div key={`${weapon?.name || 'unknown'} - ${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
-                                <img
-                                    src={weapon?.image?.url}
-                                    alt={weapon?.name || `Weapon ${index + 1}`}
-                                    title={weapon?.name || `Weapon ${index + 1}`} // Tooltip on hover
-                                    className="w-full h-full object-contain" // object-contain keeps aspect ration
-                                    onError={(e) => { e.target.src = '';/* Show placeholder or hide on error */}}
-                                />
-                            </div>
-                        ))}
+                        {weapons?.map((weapon, index) => {
+                            // --- temp debug log ---
+                            console.log(`Rendering weapon from SCHEDULE: Name='${weapon?.name}', ID='${weapon?.__splatoon3ink_id || 'N/A'}'`);
+                            // --- Eng debug log ---
+                            return (
+                                <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
+                                    <img
+                                        src={weapon?.image?.url}
+                                        alt={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`}
+                                        title={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`} // Tooltip on hover
+                                        //alt={weapon?.name || `Weapon ${index + 1}`}
+                                        //title={weapon?.name || `Weapon ${index + 1}`} // debug
+                                        className="w-full h-full object-contain" // object-contain keeps aspect ratio
+                                        onError={(e) => { e.target.src = '';}}
+                                    />
+                                </div>
+                            );
+                        })}
                         {/* Handle case where weapons might be unknown */}
                         {(!weapons || weapons.length === 0) && (
                             <p className="text-gray-500 text-lg">????</p>
