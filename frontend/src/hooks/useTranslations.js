@@ -81,7 +81,7 @@ export function useTranslations() {
 
                 // --- Preprocess English data to create Name -> ID map ---
                 const nameMap = {};
-                let mapEntryCount = 0; // Counter for debugging
+                /* let mapEntryCount = 0; // Counter for debugging */
                 if (enData.weapons) {
                     console.log(`Processing ${Object.keys(enData.weapons).length} weapons from en-US locale...`)
                     for (const [id, weaponInfo] of Object.entries(enData.weapons)) {
@@ -91,7 +91,7 @@ export function useTranslations() {
                             // Handle potential duplicate names? for now, first wins.
                             if (!nameMap[weaponInfo.name]) {
                                 nameMap[weaponInfo.name] = id;
-                                mapEntryCount++;
+                                /* mapEntryCount++; */
                             } else {
                                 console.warn(`Duplicate English weapon name found in locale file: '${weaponInfo.name}'. ID ${id} ignored.`)
                             }
@@ -146,9 +146,9 @@ export function useTranslations() {
 
 
         // debug
-        if (currentLocale === 'zh-CN') {
+/*         if (currentLocale === 'zh-CN') {
             console.log("Locale data for zh-CN:", localeData?.['zh-CN']);
-        }
+        } */
 
 
         // Proceed with lookup using idToLookup in the current locale

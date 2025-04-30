@@ -1,9 +1,14 @@
 import React, {useState, useEffect, useCallback, Fragment, use} from 'react';
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
+
+
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
 import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
 import { useTranslations } from '../../hooks/useTranslations';
 import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
+import ScheduleList from '../ScheduleList/ScheduleList';
+import SuccessModal from '../SuccessModal/SuccessModal';
+import BookingForm from '../BookingForm/BookingForm';
 
 
 
@@ -66,6 +71,18 @@ function AvailabilityDisplay(){
 	};
 
 
+	// --- Function click handler for *this* specific shift ---
+	const handleExpandShift = (shiftToExpand) => {
+
+		if (!shiftToExpand) return; // Basic gaurd
+		console.log("Expanding shift:", shiftToExpand.startTime);
+		setDetailShiftData(shiftToExpand); // Store the whole shift object
+		setIsDetailModalOpen(true); // Open the detail modal
+		setSelectedSlotId(null);
+		setBookingError(null);
+	};
+
+
 	// --- Function fecth data ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
@@ -77,8 +94,8 @@ function AvailabilityDisplay(){
 		setOfficialScheduleError(null);
 
 		// Debug: temp clear data on new fetch attempt
-		setAvailableSlots([]); // Clear data visually during load
-		setOfficialSchedule(null);
+/* 		setAvailableSlots([]); // Clear data visually during load
+		setOfficialSchedule(null); */
 		console.log("Fetching host availability and official schedule...");
 		
 
@@ -179,7 +196,7 @@ function AvailabilityDisplay(){
 	};
 
 
-	// Function to handle closing the booking form/modal
+	// Function Handler to close the booking form/modal
 	const handleCancelBooking = () => {
 		setSelectedSlotId(null); // Clear the selected slot ID
 		setBookingError(null);
@@ -204,7 +221,7 @@ function AvailabilityDisplay(){
 		event.preventDefault();
 
 
-		// -- 1. Set Loading and clear Statuese --
+		// -- 1. Set Loading and clear Statuses --
 		// Update state to indicate the booking process has started
 		setIsBookingLoading(true);
 		setBookingError(null);
@@ -267,9 +284,10 @@ function AvailabilityDisplay(){
 			// Set the success message including the visitor code from the backend
 			setLastVisitorCode(data.visitorBookingCode); // Store the specific code
 			setIsSuccessModalOpen(true);
+			console.log("!!! Setting isSuccessModalOpen to true !!!"); // debug
 
 			try{
-				// Store the visitor's code in Local Storage for future use
+				// Store the visitor's code in Local Storage
 				// localStorage only stores strings.
 				localStorage.setItem('visitorBookingCode', data.visitorBookingCode);
 				// 'friendCode' here is the state variable holding what the user submitted
@@ -287,7 +305,8 @@ function AvailabilityDisplay(){
 			setMessage(''); // Clear the form field
 
 			// --- IMPORTANT: Refresh list of available slots ---
-			fetchAllData();
+			fetchSchedulesAndHostSlots();
+			console.log("Called function to refresh slots/schedule."); // debug
 
 
 		} catch (err) {
@@ -305,6 +324,20 @@ function AvailabilityDisplay(){
 		}
 	};
 
+
+	// Function Handler for friend code input changes
+	const handleFriendCodeChange = (event) => {
+		setFriendCode(event.target.value);
+	};
+
+
+	// Function Handler for message input changes
+	const handleMessageChange = (event) => {
+		setMessage(event.target.value);
+	};
+
+
+	// --- Debug ---
 	console.log('rendering check:', {
 		isLoadingHostSlots,
 		isLoadingOfficialSchedule,
@@ -317,6 +350,8 @@ function AvailabilityDisplay(){
 	console.log(officialSchedule);
 	// debug
 	console.log("Rendering with currentLocale:", currentLocale);
+	// --- End Debug ---
+	
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
 
@@ -336,6 +371,7 @@ function AvailabilityDisplay(){
 					Official Schedule & My Availability
 				</h2>
 				{/* Use changeLocale from the hook */}
+				{/* Language Switch Button */}
 				<button
 					onClick={() => changeLocale(currentLocale === 'en-US' ? 'zh-CN' : 'en-US')}
 					className='text-sm bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded'
@@ -356,167 +392,34 @@ function AvailabilityDisplay(){
 			{localeError && <p className='text-red-400'>Error loading language data: {localeError}</p>}
 
 
-			{/* --- Display Official Schedules (Only if both loaded successfully) --- */}
-			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && (
-				<div className='space-y-6'>
-					{/* --- Section for Regular Schedules --- */}
-					{officialSchedule.regularSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
-							<div className='space-y-4'>
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-
-
-									// Define the click handler for *this* specific shift
-									const handleExpandClick = () => {
-										if (hasOverlap) {
-											console.log("Expanding shift:", shift.startTime);
-											setDetailShiftData(shift); // Store the whole shift object
-											setIsDetailModalOpen(true); // Open the detail modal
-											// Clear any booking form state if a new shift is expanded
-											setSelectedSlotId(null);
-											setBookingError(null);
-										}
-									};
-
-
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift}		
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											hasOverlap={hasOverlap}
-											onExpand={handleExpandClick} // Handler function
-										/>
-									);
-								})}
-							</div>
-						</div>
-					)}
-
-					{/* --- Section for Big Run --- */}
-					{officialSchedule.bigRunSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
-							<div className="space-y-4">
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift} // Pass shift data as prop, use startTime as key			
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											// --- Pass new props ---
-											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
-											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
-										/>
-									);
-								})};
-							</div>
-						</div>
-					)}
-
-
-					{/* --- Section for Team Contest --- */}
-					{officialSchedule.teamContestSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className="text-xl font-semibold text-purple-400 mb-3">Team Contest</h3>
-							<div className="space-y-4">
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift} // Pass shift data as prop, use startTime as key			
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											// --- Pass new props ---
-											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
-											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
-										/>
-									);
-								})};
-							</div>
-						</div>
-					)}
-					{/* If no schedules found at all */}
-					{!officialSchedule.regularSchedules?.nodes?.length && 
-					!officialSchedule.bigRunSchedules?.nodes?.length && 
-					!officialSchedule.teamContestSchedules?.nodes?.length && (
-						<p className='text-gray-400'>No upcoming Salmon Run schedules found in the Ink api data</p>
-					)}
-				</div>
+			{/* --- Display Official Schedule Lists --- */}
+			{/* Render ScheduleList only when data is ready */}
+			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && availableSlots && (
+				<ScheduleList
+					officialSchedule={officialSchedule}
+					hostAvailability={availableSlots}
+					t={t}
+					currentLocale={currentLocale}
+					checkShiftOverlap={checkShiftOverlap} // Pass the function from this component
+					handleExpandShift={handleExpandShift} // Pass the click handler function
+				/>
 			)}
 			{/* --- End Display Area for Slots List --- */}
 			
 
-			{/* --- Booking Form (Rendered separately, below the list area) --- */}
-			{selectedSlotId !== null && ( // Only show form if a slot is selected
-				<div className="mt-6 p-4 bg-gray-600 rounded-lg border border-cyan-500">
-					<h3 className="text-xl font-semibold mb-3 text-cyan-300">
-						Book Slot ID: {selectedSlotId}
-					</h3>
-					<form onSubmit={handleBookingSubmit} className="space-y-4">
-						<div>
-							<label htmlFor="friendCode" className="block text-sm font-medium text-gray-300 mb-1">
-								Your Friend Code: <span className="text-red-400">*</span>
-							</label>
-							<input
-								type="text"
-								id="friendCode"
-								value={friendCode}
-								onChange={(e) => setFriendCode(e.target.value)}
-								required
-								className="w-full px-3 py-2 rounded-md bg-gray-500 border border-gray-400 text-white focus:outline-none focus:border-cyan-400"
-								placeholder="SW-XXXX-XXXX-XXXX"
-							/>
-						</div>
-						<div>
-							<label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-1">
-								Message (Optional):
-							</label>
-							<textarea
-								id="message"
-								value={message}
-								onChange={(e) => setMessage(e.target.value)}
-								rows="2"
-								className="w-full px-3 py-2 rounded-md bg-gray-500 border border-gray-400 text-white focus:outline-none focus:border-cyan-400"
-								placeholder="Any notes for the host?"
-							/>
-						</div>
-				
-
-						{/* Display Booking Status */}
-						{isBookingLoading && <p className="text-yellow-400">Submitting booking...</p>}
-						{bookingError && <p className="text-red-400">Error: {bookingError}</p>}
-						{/* Success message is handled outside/after closing the form for now */}
-				
-				
-						<div className="flex justify-end space-x-3">
-							<button
-								type="button" // Important: type="button" to prevent form submission
-								onClick={handleCancelBooking}
-								className="bg-gray-500 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-								disabled={isBookingLoading} // Disable while submitting
-							>
-								Cancel
-							</button>
-							<button
-								type="submit"
-								className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-								disabled={!friendCode || isBookingLoading} // Disable if no friend code or submitting
-							>
-								{isBookingLoading ? 'Booking...' : 'Confirm Booking'}
-							</button>
-						</div>
-					</form>
-				</div>
+			{/* --- Booking Form --- */}
+			{selectedSlotId !== null && (
+				<BookingForm
+					slotId={selectedSlotId}
+					friendCode={friendCode}
+					onFriendCodeChange={handleFriendCodeChange}
+					message={message}
+					onMessageChange={handleMessageChange} 
+					onSubmit={handleBookingSubmit} // Pass the main submit handler
+					onCancel={handleCancelBooking}
+					isLoading={isBookingLoading}
+					error={bookingError}
+				/>
 			)}
 			{/* --- End Booking Form --- */}
 
@@ -535,67 +438,14 @@ function AvailabilityDisplay(){
 			/>
 
 
-			{/* --- Headless UI Success Modal --- */}
-			{/* No longer need <Transition> component here */}
-			<Dialog open={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} className="relative z-50">
-				{/* The backdrop, with transition prop and classes */}
-				<DialogBackdrop
-					transition // Enable transition feature for backdrop
-					className="fixed inset-0 bg-black/30 duration-300 ease-out data-[closed]:opacity-0" // Use data-[closed] variant
-				/>
+			{/* --- Booking Success Modal --- */}
+			<SuccessModal
+				isOpen={isSuccessModalOpen}
+				onClose={() => setIsSuccessModalOpen(false)}
+				visitorCode={lastVisitorCode}
+				hostContactInfo={hostContactInfo}
+			/>
 
-
-				{/* Full-screen container to center the panel */}
-				<div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
-					{/* The actaul dialog panel, with transition prop and classes */}
-					<DialogPanel
-						transition // Enable transition feature for panel
-						className="w-full max-w-md transform space-y-4 overflow-hidden rounded-2xl bg-gray-800 border 	border-green-500 p-6 text-left align-middle shadow-xl duration-300 ease-out data-[closed]:scale-95 data-	[closed]:opacity-0" // Use data-[closed] variant for combined effect
-					>
-						{/* Dislog Title */}
-						<DialogTitle
-							as='h3'
-							className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
-						>
-							🎉 预约成功（还需要最后确认）🎉
-						</DialogTitle>
-
-
-						{/* Display the Visitor Code (no changes needed inside) */}
-						<div className='mt-2 text-center'>
-							<p className='text-sm text-gray-400 mb-1'>
-								请保管好您的数字ID（点击复制)
-							</p>
-							<p className='text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all'>
-								{lastVisitorCode}
-							</p>
-						</div>
-
-						{/* Display Host Contact Info and Instructions (no changes needed inside) */}
-						<div className='mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600'>
-							<p className='font-semibold mb-1 text-orange-300'>Next Step: Final Confirmation</p>
-							<p className='text-gray-300'>
-								To finalize this session, please send your Visitor Code ({lastVisitorCode}) to the host via Discord:
-							</p>
-							<p className='mt-1'>
-								<span className='font-mono bg-gray-900 px-2 py-1 rounded text-white'>{hostContactInfo}</span>
-							</p>
-						</div>
-
-						{/* Close button (no changes needed inside) */}
-						<div className='mt-6 text-center'>
-							<button
-								type='button'
-								className='inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900'
-								onClick={() => setIsSuccessModalOpen(false)}
-							>
-								Okay, Got it!
-							</button>
-						</div>
-					</DialogPanel>
-				</div>
-			</Dialog>
-			{/* --- End Headless UI Success Modal --- */}
 		</div>
 	);
 }
