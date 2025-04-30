@@ -8,6 +8,7 @@ import { useTranslations } from '../../hooks/useTranslations';
 import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 import ScheduleList from '../ScheduleList/ScheduleList';
 import SuccessModal from '../SuccessModal/SuccessModal';
+import BookingForm from '../BookingForm/BookingForm';
 
 
 
@@ -195,7 +196,7 @@ function AvailabilityDisplay(){
 	};
 
 
-	// Function to handle closing the booking form/modal
+	// Function Handler to close the booking form/modal
 	const handleCancelBooking = () => {
 		setSelectedSlotId(null); // Clear the selected slot ID
 		setBookingError(null);
@@ -323,6 +324,20 @@ function AvailabilityDisplay(){
 		}
 	};
 
+
+	// Function Handler for friend code input changes
+	const handleFriendCodeChange = (event) => {
+		setFriendCode(event.target.value);
+	};
+
+
+	// Function Handler for message input changes
+	const handleMessageChange = (event) => {
+		setMessage(event.target.value);
+	};
+
+
+	// --- Debug ---
 	console.log('rendering check:', {
 		isLoadingHostSlots,
 		isLoadingOfficialSchedule,
@@ -335,6 +350,8 @@ function AvailabilityDisplay(){
 	console.log(officialSchedule);
 	// debug
 	console.log("Rendering with currentLocale:", currentLocale);
+	// --- End Debug ---
+	
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
 
@@ -375,7 +392,7 @@ function AvailabilityDisplay(){
 			{localeError && <p className='text-red-400'>Error loading language data: {localeError}</p>}
 
 
-			{/* --- Display Official Schedules --- */}
+			{/* --- Display Official Schedule Lists --- */}
 			{/* Render ScheduleList only when data is ready */}
 			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && availableSlots && (
 				<ScheduleList
@@ -390,67 +407,19 @@ function AvailabilityDisplay(){
 			{/* --- End Display Area for Slots List --- */}
 			
 
-			{/* --- Booking Form (Rendered separately, below the list area) --- */}
-			{selectedSlotId !== null && ( // Only show form if a slot is selected
-				<div className="mt-6 p-4 bg-gray-600 rounded-lg border border-cyan-500">
-					<h3 className="text-xl font-semibold mb-3 text-cyan-300">
-						Book Slot ID: {selectedSlotId}
-					</h3>
-					<form onSubmit={handleBookingSubmit} className="space-y-4">
-						<div>
-							<label htmlFor="friendCode" className="block text-sm font-medium text-gray-300 mb-1">
-								Your Friend Code: <span className="text-red-400">*</span>
-							</label>
-							<input
-								type="text"
-								id="friendCode"
-								value={friendCode}
-								onChange={(e) => setFriendCode(e.target.value)}
-								required
-								className="w-full px-3 py-2 rounded-md bg-gray-500 border border-gray-400 text-white focus:outline-none focus:border-cyan-400"
-								placeholder="SW-XXXX-XXXX-XXXX"
-							/>
-						</div>
-						<div>
-							<label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-1">
-								Message (Optional):
-							</label>
-							<textarea
-								id="message"
-								value={message}
-								onChange={(e) => setMessage(e.target.value)}
-								rows="2"
-								className="w-full px-3 py-2 rounded-md bg-gray-500 border border-gray-400 text-white focus:outline-none focus:border-cyan-400"
-								placeholder="Any notes for the host?"
-							/>
-						</div>
-				
-
-						{/* Display Booking Status */}
-						{isBookingLoading && <p className="text-yellow-400">Submitting booking...</p>}
-						{bookingError && <p className="text-red-400">Error: {bookingError}</p>}
-						{/* Success message is handled outside/after closing the form for now */}
-				
-				
-						<div className="flex justify-end space-x-3">
-							<button
-								type="button" // Important: type="button" to prevent form submission
-								onClick={handleCancelBooking}
-								className="bg-gray-500 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-								disabled={isBookingLoading} // Disable while submitting
-							>
-								Cancel
-							</button>
-							<button
-								type="submit"
-								className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-								disabled={!friendCode || isBookingLoading} // Disable if no friend code or submitting
-							>
-								{isBookingLoading ? 'Booking...' : 'Confirm Booking'}
-							</button>
-						</div>
-					</form>
-				</div>
+			{/* --- Booking Form --- */}
+			{selectedSlotId !== null && (
+				<BookingForm
+					slotId={selectedSlotId}
+					friendCode={friendCode}
+					onFriendCodeChange={handleFriendCodeChange}
+					message={message}
+					onMessageChange={handleMessageChange} 
+					onSubmit={handleBookingSubmit} // Pass the main submit handler
+					onCancel={handleCancelBooking}
+					isLoading={isBookingLoading}
+					error={bookingError}
+				/>
 			)}
 			{/* --- End Booking Form --- */}
 
