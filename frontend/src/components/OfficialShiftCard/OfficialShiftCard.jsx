@@ -57,7 +57,7 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
                     {/* Show King Salmonid */}
                     {boss?.name &&(
                         <p className="text-xs text-gray-400 mt-1">
-                            King Salmonid: {t('bosses', boss?.id, boss?.name) || boss?.name}
+                            {('ui', 'kingSalmonid', 'King Salmonid:')} {t('bosses', boss?.id, boss?.name) || boss?.name}
                             </p>
                     )}
                 </div>
@@ -65,7 +65,7 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
                 {/* Right Section: Weapons */}
                 <div className="flex flex-col items-center space-y-1 flex-shrink-0">
-                    <p className="text-xs text-gray-400 mb-1 font-semibold">Weapons</p>
+                    <p className="text-xs text-gray-400 mb-1 font-semibold">{t('ui', 'weaponsLabel', 'Weapons')}</p>
                     <div className="flex space-x-1">
                         {weapons?.map((weapon, index) => {
 /*                             // --- temp debug log ---
