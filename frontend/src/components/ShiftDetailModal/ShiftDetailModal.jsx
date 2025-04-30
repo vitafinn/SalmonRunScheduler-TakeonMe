@@ -16,6 +16,8 @@ function shiftDetailModal({
     isBookingLoading        // Boolean: Is a booking POST request in progress? - passed from parent
 }) {
     // --- Gaurd Clause ---
+    if (typeof t !== 'function') return <div>Error: Missing translation function.</div>;
+
     // If the modal isn't open or ther's no shift data, render nothing
     if (!isOpen || !shiftData) {
         return null;
@@ -59,7 +61,7 @@ function shiftDetailModal({
 
                     {/* --- Modal Body: List of Available Host Slots --- */}
                     <DialogTitle as="h3" className="text-lg font-medium leading-6 text-cyan-300 mb-3">
-                        Your Available Slots During This Shift
+                        {t('ui', 'detailModalTitle', 'Your Available Slots During This Shift:')}
                     </DialogTitle>
                     <div className="mt-2 max-h-60 overflow-y-auto pr-2 border-t border-gray-600 pt-3"> {/* Scrollable list */}
                         {slotsForThisShift.length > 0 ? (
@@ -80,14 +82,16 @@ function shiftDetailModal({
                                             // Disable if parent indicates a booking is loading OR if this specific slot is already selected in parent
                                             disabled={isBookingLoading || selectedSlotId === slot.id}
                                         >
-                                            {selectedSlotId === slot.id ? 'Selected' : 'Book'}
+                                            {selectedSlotId === slot.id 
+                                            ? t('ui', 'bookButtonSelected', 'Selected')
+                                            : t('ui', 'bookButtonLabel', 'Book')}
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
                             <p className="text-gray-400 italic py-4 text-center">
-                                No specific 30-minute slots available during this shift timeframe.
+                                {t('ui', 'detailModalNoSlots', 'No specific 30-minute slots available during this shift timeframe.')}
                             </p>
                         )}
                     </div>
@@ -100,7 +104,7 @@ function shiftDetailModal({
                             className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
                             onClick={onClose}
                         >
-                            Close
+                            {t('ui', 'closeButtonLabel', 'Close')}
                         </button>
                     </div>
                 </DialogPanel>
