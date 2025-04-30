@@ -1,9 +1,12 @@
 import React, {useState, useEffect, useCallback, Fragment, use} from 'react';
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react';
+
+
 import OfficialShiftCard from '../OfficialShiftCard/OfficialShiftCard';
 import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFormatTime} from '../../utils/dateUtils'
 import { useTranslations } from '../../hooks/useTranslations';
 import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
+import ScheduleList from '../ScheduleList/ScheduleList';
 
 
 
@@ -63,6 +66,18 @@ function AvailabilityDisplay(){
 			}
 			return overlaps;
 		});
+	};
+
+
+	// --- Function click handler for *this* specific shift ---
+	const handleExpandShift = (shiftToExpand) => {
+
+		if (!shiftToExpand) return; // Basic gaurd
+		console.log("Expanding shift:", shiftToExpand.startTime);
+		setDetailShiftData(shiftToExpand); // Store the whole shift object
+		setIsDetailModalOpen(true); // Open the detail modal
+		setSelectedSlotId(null);
+		setBookingError(null);
 	};
 
 
@@ -356,102 +371,17 @@ function AvailabilityDisplay(){
 			{localeError && <p className='text-red-400'>Error loading language data: {localeError}</p>}
 
 
-			{/* --- Display Official Schedules (Only if both loaded successfully) --- */}
-			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && (
-				<div className='space-y-6'>
-					{/* --- Section for Regular Schedules --- */}
-					{officialSchedule.regularSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className='text-xl font-semibold text-orange-300 mb-3'>Upcoming Shifts</h3>
-							<div className='space-y-4'>
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-
-
-									// Define the click handler for *this* specific shift
-									const handleExpandClick = () => {
-										if (hasOverlap) {
-											console.log("Expanding shift:", shift.startTime);
-											setDetailShiftData(shift); // Store the whole shift object
-											setIsDetailModalOpen(true); // Open the detail modal
-											// Clear any booking form state if a new shift is expanded
-											setSelectedSlotId(null);
-											setBookingError(null);
-										}
-									};
-
-
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift}		
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											hasOverlap={hasOverlap}
-											onExpand={handleExpandClick} // Handler function
-										/>
-									);
-								})}
-							</div>
-						</div>
-					)}
-
-					{/* --- Section for Big Run --- */}
-					{officialSchedule.bigRunSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className="text-xl font-semibold text-red-400 mb-3">!!! Big Run Active !!!</h3>
-							<div className="space-y-4">
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift} // Pass shift data as prop, use startTime as key			
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											// --- Pass new props ---
-											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
-											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
-										/>
-									);
-								})};
-							</div>
-						</div>
-					)}
-
-
-					{/* --- Section for Team Contest --- */}
-					{officialSchedule.teamContestSchedules?.nodes?.length > 0 && (
-						<div>
-							<h3 className="text-xl font-semibold text-purple-400 mb-3">Team Contest</h3>
-							<div className="space-y-4">
-								{officialSchedule.regularSchedules?.nodes.map(shift => {
-									// Calculate overlap for this shift
-									const hasOverlap = checkShiftOverlap(shift.startTime, shift.endTime, availableSlots);
-									return(
-										<OfficialShiftCard
-											key={shift.startTime}
-											shift={shift} // Pass shift data as prop, use startTime as key			
-											t={t}
-											currentLocale = {currentLocale} // Locale from hook
-											// --- Pass new props ---
-											hasOverlap={hasOverlap} // Boolean indicating if host is available during this shift
-											onExpand={() => setExpandedShiftStartTime(shift.startTime)} // Function to call when card is clicked
-										/>
-									);
-								})};
-							</div>
-						</div>
-					)}
-					{/* If no schedules found at all */}
-					{!officialSchedule.regularSchedules?.nodes?.length && 
-					!officialSchedule.bigRunSchedules?.nodes?.length && 
-					!officialSchedule.teamContestSchedules?.nodes?.length && (
-						<p className='text-gray-400'>No upcoming Salmon Run schedules found in the Ink api data</p>
-					)}
-				</div>
+			{/* --- Display Official Schedules --- */}
+			{/* Render ScheduleList only when data is ready */}
+			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && availableSlots && (
+				<ScheduleList
+					officialSchedule={officialSchedule}
+					hostAvailability={availableSlots}
+					t={t}
+					currentLocale={currentLocale}
+					checkShiftOverlap={checkShiftOverlap} // Pass the function from this component
+					handleExpandShift={handleExpandShift} // Pass the click handler function
+				/>
 			)}
 			{/* --- End Display Area for Slots List --- */}
 			

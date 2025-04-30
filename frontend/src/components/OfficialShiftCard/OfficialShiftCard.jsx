@@ -58,7 +58,7 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
                     {boss?.name &&(
                         <p className="text-xs text-gray-400 mt-1">
                             King Salmonid: {t('bosses', boss?.id, boss?.name) || boss?.name}
-                        </p>
+                            </p>
                     )}
                 </div>
 
