@@ -14,7 +14,7 @@ function ScheduleList({
     
 
     // Helper function to render a section
-    const renderShiftSection = (title, shifts, titleColor = 'text-orange-300') => {
+    const renderShiftSection = (titleKey, defaultTitle, shifts, titleColor = 'text-orange-300') => {
         // Check if shifts exist and have nodes
         if (!shifts?.nodes || shifts.nodes.length === 0) {
             return null; // Don't render anything if no shifts in this node
@@ -23,7 +23,9 @@ function ScheduleList({
 
         return (
             <div>
-                <h3 className={`text-xl font-semibold ${titleColor} mb-3`}>{title}</h3>
+                <h3 className={`text-xl font-semibold ${titleColor} mb-3`}>
+                    {t('ui', titleKey, defaultTitle)}
+                </h3>
                 <div className="space-y-4">
                     {shifts.nodes.map(shift => {
                         // Calculate overlap for this specific shift
@@ -58,14 +60,16 @@ function ScheduleList({
     return (
         <div className="space-y-6">
             {/* Render each section using the helper */}
-            {renderShiftSection('Upcoming Shifts', officialSchedule.regularSchedules)}
-            {renderShiftSection('Big run Active!', officialSchedule.bigRunschedulesSchedules, 'text-red-400')}
-            {renderShiftSection('Team Contest', officialSchedule.teamContestSchedulesSchedules, 'text-purple-400')}
+            {renderShiftSection('upcomingShiftsTitle', 'Upcoming Shifts', officialSchedule.regularSchedules)}
+            {renderShiftSection('bigRunActiveTitle', 'Big run Active!', officialSchedule.bigRunschedulesSchedules, 'text-red-400')}
+            {renderShiftSection('teamContestTitle', 'Team Contest', officialSchedule.teamContestSchedulesSchedules, 'text-purple-400')}
 
 
             {/* Message if no shifts were found in any section (unlikely) */}
             {!hasAnyShifts && (
-                <p className="text-gray-400">No upcoming Salmon Run schedules found in the Ink api data</p>
+                <p className="text-gray-400">
+                    {t('ui', 'noSchedulesFound', 'No upcoming Salmon Run schedules found in the Ink api data')}
+                </p>
             )}
         </div>
     )
