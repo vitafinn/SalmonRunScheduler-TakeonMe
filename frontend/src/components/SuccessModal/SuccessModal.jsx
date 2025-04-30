@@ -3,12 +3,15 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/re
 
 
 function SuccessModal({
-    isOpen, // Boolean: Controls visibility
-    onClose, // Function: To close the modal
-    visitorCode, // String: The verification id to display
-    hostContactInfo // String: My contact info
+    isOpen          ,   // Boolean: Controls visibility
+    onClose         ,   // Function: To close the modal
+    visitorCode     ,   // String: The verification id to display
+    hostContactInfo ,   // String: My contact info
+    t   // Function: Translation function
 }) {
 
+
+    if (typeof t !== 'function') return <div>Error: Missing translation function.</div>;
 
     // Render nothing if not open or no code provided
     if (!isOpen || !visitorCode) {
@@ -37,14 +40,15 @@ function SuccessModal({
                         as="h3"
                         className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
                     >
-                        🎉 预约成功（还需要最后确认）🎉
+                        {t('ui', 'successModalTitle', '🎉 预约成功（还需要最后确认）🎉')}
                     </DialogTitle>
 
 
                     {/* Visitor Code */}
                     <div className="mt-2 text-center">
                         <p className="text-sm text-gray-400 mb-1">
-                            请保管好您的数字ID（点击复制)
+                            
+                            {t('ui', 'successModalCodeLabel', '请保管好您的数字ID（点击复制)')}
                         </p>
                         <p className="text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all">
                             {visitorCode} {/* Display the passed visitorCode prop */}
@@ -54,9 +58,11 @@ function SuccessModal({
 
                     {/* Host info & Instructions */}
                     <div className="mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600">
-                        <p className="font-semibold mb-1 text-orange-300">Next Step: Final Confirmation</p>
+                        <p className="font-semibold mb-1 text-orange-300">
+                            {t('ui', 'successModalNextStepLabel', 'Next Step: Final Confirmation')}
+                        </p>
                         <p className="text-gray-300">
-                            To finalize this session, please send your Visitor Code ({visitorCode}) to the host via Discord:
+                            {t('ui', 'successModalInstructionsPart1', 'To finalize this session, please send your Visitor Code ({visitorCodePlaceholder}) to the host via Discord:').replace('{visitorCodePlaceholder}', visitorCode)}
                         </p>
                         <p className="mt-1">
                             {/* Display the passed hostContactInfo prop */}
@@ -72,7 +78,7 @@ function SuccessModal({
                             className="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
                             onClick={onClose} // Use the passed onClose prop
                         >
-                            Okay, Got it!
+                            {t('ui', 'successModalCloseButton', 'Okay, Got It!')}
                         </button>
                     </div>
                 </DialogPanel>
