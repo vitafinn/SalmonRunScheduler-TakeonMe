@@ -7,6 +7,7 @@ import {formatDateHeader as dateUtilsFormatDateHeader, formatTime as dateUtilsFo
 import { useTranslations } from '../../hooks/useTranslations';
 import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 import ScheduleList from '../ScheduleList/ScheduleList';
+import SuccessModal from '../SuccessModal/SuccessModal';
 
 
 
@@ -92,8 +93,8 @@ function AvailabilityDisplay(){
 		setOfficialScheduleError(null);
 
 		// Debug: temp clear data on new fetch attempt
-		setAvailableSlots([]); // Clear data visually during load
-		setOfficialSchedule(null);
+/* 		setAvailableSlots([]); // Clear data visually during load
+		setOfficialSchedule(null); */
 		console.log("Fetching host availability and official schedule...");
 		
 
@@ -219,7 +220,7 @@ function AvailabilityDisplay(){
 		event.preventDefault();
 
 
-		// -- 1. Set Loading and clear Statuese --
+		// -- 1. Set Loading and clear Statuses --
 		// Update state to indicate the booking process has started
 		setIsBookingLoading(true);
 		setBookingError(null);
@@ -282,9 +283,10 @@ function AvailabilityDisplay(){
 			// Set the success message including the visitor code from the backend
 			setLastVisitorCode(data.visitorBookingCode); // Store the specific code
 			setIsSuccessModalOpen(true);
+			console.log("!!! Setting isSuccessModalOpen to true !!!"); // debug
 
 			try{
-				// Store the visitor's code in Local Storage for future use
+				// Store the visitor's code in Local Storage
 				// localStorage only stores strings.
 				localStorage.setItem('visitorBookingCode', data.visitorBookingCode);
 				// 'friendCode' here is the state variable holding what the user submitted
@@ -302,7 +304,8 @@ function AvailabilityDisplay(){
 			setMessage(''); // Clear the form field
 
 			// --- IMPORTANT: Refresh list of available slots ---
-			fetchAllData();
+			fetchSchedulesAndHostSlots();
+			console.log("Called function to refresh slots/schedule."); // debug
 
 
 		} catch (err) {
@@ -351,6 +354,7 @@ function AvailabilityDisplay(){
 					Official Schedule & My Availability
 				</h2>
 				{/* Use changeLocale from the hook */}
+				{/* Language Switch Button */}
 				<button
 					onClick={() => changeLocale(currentLocale === 'en-US' ? 'zh-CN' : 'en-US')}
 					className='text-sm bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded'
@@ -465,67 +469,14 @@ function AvailabilityDisplay(){
 			/>
 
 
-			{/* --- Headless UI Success Modal --- */}
-			{/* No longer need <Transition> component here */}
-			<Dialog open={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} className="relative z-50">
-				{/* The backdrop, with transition prop and classes */}
-				<DialogBackdrop
-					transition // Enable transition feature for backdrop
-					className="fixed inset-0 bg-black/30 duration-300 ease-out data-[closed]:opacity-0" // Use data-[closed] variant
-				/>
+			{/* --- Booking Success Modal --- */}
+			<SuccessModal
+				isOpen={isSuccessModalOpen}
+				onClose={() => setIsSuccessModalOpen(false)}
+				visitorCode={lastVisitorCode}
+				hostContactInfo={hostContactInfo}
+			/>
 
-
-				{/* Full-screen container to center the panel */}
-				<div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
-					{/* The actaul dialog panel, with transition prop and classes */}
-					<DialogPanel
-						transition // Enable transition feature for panel
-						className="w-full max-w-md transform space-y-4 overflow-hidden rounded-2xl bg-gray-800 border 	border-green-500 p-6 text-left align-middle shadow-xl duration-300 ease-out data-[closed]:scale-95 data-	[closed]:opacity-0" // Use data-[closed] variant for combined effect
-					>
-						{/* Dislog Title */}
-						<DialogTitle
-							as='h3'
-							className="text-xl font-bold leading-6 text-green-300 text-center mb-4"
-						>
-							🎉 预约成功（还需要最后确认）🎉
-						</DialogTitle>
-
-
-						{/* Display the Visitor Code (no changes needed inside) */}
-						<div className='mt-2 text-center'>
-							<p className='text-sm text-gray-400 mb-1'>
-								请保管好您的数字ID（点击复制)
-							</p>
-							<p className='text-2xl font-mono font-bold bg-gray-900 text-white py-2 px-4 rounded-md inline-block mb-4 select-all'>
-								{lastVisitorCode}
-							</p>
-						</div>
-
-						{/* Display Host Contact Info and Instructions (no changes needed inside) */}
-						<div className='mt-4 p-3 bg-gray-700 rounded text-center text-sm border border-gray-600'>
-							<p className='font-semibold mb-1 text-orange-300'>Next Step: Final Confirmation</p>
-							<p className='text-gray-300'>
-								To finalize this session, please send your Visitor Code ({lastVisitorCode}) to the host via Discord:
-							</p>
-							<p className='mt-1'>
-								<span className='font-mono bg-gray-900 px-2 py-1 rounded text-white'>{hostContactInfo}</span>
-							</p>
-						</div>
-
-						{/* Close button (no changes needed inside) */}
-						<div className='mt-6 text-center'>
-							<button
-								type='button'
-								className='inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900'
-								onClick={() => setIsSuccessModalOpen(false)}
-							>
-								Okay, Got it!
-							</button>
-						</div>
-					</DialogPanel>
-				</div>
-			</Dialog>
-			{/* --- End Headless UI Success Modal --- */}
 		</div>
 	);
 }

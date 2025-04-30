@@ -68,9 +68,9 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
                     <p className="text-xs text-gray-400 mb-1 font-semibold">Weapons</p>
                     <div className="flex space-x-1">
                         {weapons?.map((weapon, index) => {
-                            // --- temp debug log ---
+/*                             // --- temp debug log ---
                             console.log(`Rendering weapon from SCHEDULE: Name='${weapon?.name}', ID='${weapon?.__splatoon3ink_id || 'N/A'}'`);
-                            // --- Eng debug log ---
+                            // --- Eng debug log --- */
                             return (
                                 <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
                                     <img
