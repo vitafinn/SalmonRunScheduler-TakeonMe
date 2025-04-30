@@ -367,29 +367,29 @@ function AvailabilityDisplay(){
 			{/* --- Display Area for Slots List --- */}
 			{/* --- Title --- */}
 			<div className='flex justify-between items-center mb-4'>
-				<h2 className='text-lg font-semibold mb-4 text-cyan-300'>
-					Official Schedule & My Availability
+				<h2 className='text-lg font-semibold text-cyan-300'>
+					{t('ui', 'mainTitle', 'Official Schedule & My Availability')}
 				</h2>
 				{/* Use changeLocale from the hook */}
-				{/* Language Switch Button */}
+				{/* Language Toggle Button */}
 				<button
 					onClick={() => changeLocale(currentLocale === 'en-US' ? 'zh-CN' : 'en-US')}
 					className='text-sm bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded'
 					disabled={isLoadingLocale} // Disable based on hook's loading state
 					title='Switch Language'
 				>
-					{currentLocale === 'en-US' ? '中文' : 'English'}
+					{currentLocale === 'en-US' ? t('ui', 'switchToChinese', '中文') : t('ui', 'switchToEnglish', 'English')}
 				</button>
 			</div>
 
 			
 			{/* --- Loading/Error States for *both* fetches --- */}
 			{(isLoadingHostSlots || isLoadingOfficialSchedule || isLoadingLocale) && (
-				<p className='text-gray-400'>Loading schedules...</p>
+				<p className='text-gray-400'>{t('ui', 'loadingSchedules', 'Loading schedules...')}</p>
 			)}
-			{hostSlotsError && <p className='text-red-400'>Error loading my availability: {hostSlotsError}</p>}
-			{officialScheduleError && <p className='text-red-400'>Error loading official schedule: {officialScheduleError}</p>}
-			{localeError && <p className='text-red-400'>Error loading language data: {localeError}</p>}
+			{hostSlotsError && <p className='text-red-400'>{t('ui', 'errorLoadingHost', 'Error loading Host availability:')} {hostSlotsError}</p>}
+			{officialScheduleError && <p className='text-red-400'>{t('ui', 'errorLoadingOffical', 'Error loading official schedule:')} {officialScheduleError}</p>}
+			{localeError && <p className='text-red-400'>{t('ui', 'errorLoadingLocale', 'Error loading language data:')} {localeError}</p>}
 
 
 			{/* --- Display Official Schedule Lists --- */}
@@ -418,6 +418,7 @@ function AvailabilityDisplay(){
 					onSubmit={handleBookingSubmit} // Pass the main submit handler
 					onCancel={handleCancelBooking}
 					isLoading={isBookingLoading}
+					t={t} // useTranslation
 					error={bookingError}
 				/>
 			)}
@@ -444,6 +445,7 @@ function AvailabilityDisplay(){
 				onClose={() => setIsSuccessModalOpen(false)}
 				visitorCode={lastVisitorCode}
 				hostContactInfo={hostContactInfo}
+				t={t} // useTranslation
 			/>
 
 		</div>
