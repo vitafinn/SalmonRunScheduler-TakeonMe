@@ -8,7 +8,7 @@ import { useTranslations } from '../../hooks/useTranslations';
 import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 import ScheduleList from '../ScheduleList/ScheduleList';
 import SuccessModal from '../SuccessModal/SuccessModal';
-import BookingForm from '../BookingForm/BookingForm';
+import BookingFormModal from '../BookingFormModal/BookingFormModal';
 
 
 
@@ -30,17 +30,18 @@ function AvailabilityDisplay(){
 
 	// --- State for  UI Interaction ---
 	//const [expandedShiftStartTime, setExpandedShiftStartTime] = useState(null);   // Track clicked/expanded shift
-	const [isDetailModalOpen, setIsDetailModalOpen]           = useState(false);
-	const [detailShiftData, setDetailShiftData]               = useState(null);
-
-	const [selectedSlotId, setSelectedSlotId]                 = useState(null);   // Track which slot ID is being booked
-	const [friendCode, setFriendCode]                         = useState('');     // Input for Friend Code
-	const [message, setMessage]                               = useState('');     // Input for Message
-	const [isBookingLoading, setIsBookingLoading]             = useState(false);  // Loading state for booking POST
-	const [bookingError, setBookingError]                     = useState(null);   // Error state for booking POST
-	const [lastVisitorCode, setLastVisitorCode]               = useState(null);   // Holds the code from the LAST successful booking
-	const [isSuccessModalOpen, setIsSuccessModalOpen]         = useState(false);  // For controlling hte success modal
-	const hostContactInfo                                     = "DC#3511";        // To be moved later to props or context
+	const [isDetailModalOpen, setIsDetailModalOpen]   = useState(false);
+	const [detailShiftData, setDetailShiftData]       = useState(null);
+	const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+	const [slotDataForBooking, setSlotDataForBooking] = useState(null);
+	const [selectedSlotId, setSelectedSlotId]         = useState(null);   // Track which slot ID is being booked
+	const [friendCode, setFriendCode]                 = useState('');     // Input for Friend Code
+	const [message, setMessage]                       = useState('');     // Input for Message
+	const [isBookingLoading, setIsBookingLoading]     = useState(false);  // Loading state for booking POST
+	const [bookingError, setBookingError]             = useState(null);   // Error state for booking POST
+	const [lastVisitorCode, setLastVisitorCode]       = useState(null);   // Holds the code from the LAST successful booking
+	const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);  // For controlling hte success modal
+	const hostContactInfo                             = "DC#3511";        // To be moved later to props or context
 
 
 	// --- Helper function to check for overlap ---
@@ -184,27 +185,26 @@ function AvailabilityDisplay(){
 	}, []); // Include fetchSlots in dependency array as per linting rules with useCallback. Or potentially just [] if fetch doesn't need deps
 
 
-	// --- Function handleBookClick ---
-	const handleBookClick = (slotId) => {
-		console.log("Booking slot ID:", slotId);
-		setSelectedSlotId     (slotId);  // Set the ID of the slot to be booked
-		setBookingError       (null);    // Clear previous booking errors
-		setLastVisitorCode    (null);    // Clear previsous code
-		setIsSuccessModalOpen (false);   // Clear Success Modal state
+	// --- Function handleTriggerBooking ---
+	const handleTriggerBooking = (slot) => {
+		if (!slot) return;
+		console.log("Triggering booking modal for slot:", slot);
+		setSlotDataForBooking(slot);  // Store the slot object for the modal
+		setIsBookingModalOpen(true);  // Open the booking modal
 
-		setMessage('');
+		setIsDetailModalOpen (false);   // Close detail modal for cleaner flow
+		setBookingError       (null);   // Clear previous booking erro
 	};
 
 
 	// Function Handler to close the booking form/modal
 	const handleCancelBooking = () => {
-		setSelectedSlotId(null); // Clear the selected slot ID
-		setBookingError(null);
-		setBookingSuccessMessage(null);
+		setIsBookingModalOpen(false); // Close the booking modal
+		setBookingError(null); // Clear any errors shown on the modal
+		setSlotDataForBooking(null); // Clear the slot data
 	};
 
 
-	// Now we just need the dateUtils functions
 	const formatDateHeader = (dateString) => {
 		// Use imported function, passing currentLocale from the hook
 		return dateUtilsFormatDateHeader(dateString, currentLocale);
@@ -337,6 +337,66 @@ function AvailabilityDisplay(){
 	};
 
 
+	// Function Handler to perform the booking API call
+	const handleConfirmBooking = async({ slotId, friendCode, message }) => {
+		setIsBookingLoading(true);
+		setBookingError(null);
+
+
+		console.log(`CONFIRMING booking for Slot ID: ${slotId}, Friend Code: ${friendCode}`);
+		const bookingData = {slotId, friendCode, message};
+
+
+		try {
+			const response = await fetch('http://localhost:3001/api/bookings', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(bookingData),
+			});
+
+
+			let errorMsg = `HTTP error! Status: ${response.status}`;
+			if (!response.ok) {
+				try {
+					const errorData = await response.json();
+					errorMsg = errorData.error || errorMsg;
+				} catch (parseError) {
+					throw new Error(errorMsg);
+				}
+
+
+				const data = await response.json();
+				console.log("Booking successul:", data);
+
+
+				// --- Success Sequence ---
+				setIsBookingModalOpen(false); // 1. Close the booking modal
+				setLastVisitorCode(data.visitorBookingCode); // 2. Set data for Success Modal
+				setIsSuccessModalOpen(true); // 3. Open the success modal
+
+
+				// Save to Local Storage
+				try {
+					localStorage.setItem('visitorBookingCode', data.visitorBookingCode);
+					localStorage.setItem('friendCode', friendCode); // Save submitted friend code
+					console.log("Saved user info to Local Storage after booking.");
+				} catch (storageError) {
+					console.warn("Could not save user info to Local Storage:", storageError);
+				}
+				fetchSchedulesAndHostSlots(); // Refresh slot list
+			}
+
+		} catch (err) {
+			console.error("Booking submission failed:", err);
+			// Set the error state *to be displayed in the booking modal*
+			setBookingError(err.message || "Booking failed. Please try again.");
+			// DO NOT close booking modal on err, let user see the msg/retry
+		} finally {
+			setIsBookingLoading(false);
+		}
+	};
+
+
 	// --- Debug ---
 	console.log('rendering check:', {
 		isLoadingHostSlots,
@@ -407,21 +467,18 @@ function AvailabilityDisplay(){
 			{/* --- End Display Area for Slots List --- */}
 			
 
-			{/* --- Booking Form --- */}
-			{selectedSlotId !== null && (
-				<BookingForm
-					slotId={selectedSlotId}
-					friendCode={friendCode}
-					onFriendCodeChange={handleFriendCodeChange}
-					message={message}
-					onMessageChange={handleMessageChange} 
-					onSubmit={handleBookingSubmit} // Pass the main submit handler
-					onCancel={handleCancelBooking}
-					isLoading={isBookingLoading}
-					t={t} // useTranslation
-					error={bookingError}
-				/>
-			)}
+			{/* --- Booking Form Modal --- */}
+			<BookingFormModal
+				isOpen={isBookingModalOpen}
+				onClose={handleCancelBooking}
+				slotToBook={slotDataForBooking} // Pass the specific slot data
+				onSubmitBooking={handleCancelBooking} // Pass the actual API call handler
+				isLoading={isBookingLoading} // Pass loading status
+				error={bookingError}
+				initialFriendCode={friendCode}
+				t={t}
+				currentLocale={currentLocale}
+			/>
 			{/* --- End Booking Form --- */}
 
 
@@ -433,8 +490,7 @@ function AvailabilityDisplay(){
 				hostAvailability={availableSlots}
 				t={t}
 				currentLocale={currentLocale}
-				handleBookClick={handleBookClick}
-				selectedSlotId={selectedSlotId}
+				handleTriggerBooking={handleTriggerBooking}
 				isBookingLoading={isBookingLoading}
 			/>
 
