@@ -91,7 +91,7 @@ export function useTranslations() {
                 const enTimestamp = localStorage.getItem(getLocaleTimestampKey('en-US'));
                 const zhTimestamp = localStorage.getItem(getLocaleTimestampKey('zh-CN'));
                 const mapTimestamp = localStorage.getItem(getWeaponMapTimestampKey());
-                //console.log("CACHE CHECK: Timestamps found:", {enTimestamp, zhTimestamp, mapTimestamp}); // debug
+                console.log("CACHE CHECK: Timestamps found:", {enTimestamp, zhTimestamp, mapTimestamp}); // debug
 
 
                 // Chche is valid *only* if all parts exist and are not expired
@@ -104,6 +104,7 @@ export function useTranslations() {
                         const enDataStr = localStorage.getItem(getLocaleCacheKey('en-US'));
                         const zhDataStr = localStorage.getItem(getLocaleCacheKey('zh-CN'));
                         const mapStr = localStorage.getItem(getWeaponMapCacheKey());
+                        console.log("CACHE CHECK: Data strings found:", {enDataStr: !!enDataStr, zhDataStr: !!zhDataStr, mapStr: !!mapStr}); // debug
                         
 
                         if (enDataStr && zhDataStr && mapStr) {
@@ -114,10 +115,22 @@ export function useTranslations() {
                             console.log("Locale Cache: Successfully loaded all data from cache.")
                         } else {
                             console.log("Locale Cache: Timestamp valid, but data missing. Cache invalid.");
+                            cacheValid = false;
                         }
                 } else {
-                    console.log("Locale Cache: Cache expired or timestamps missing. Fetching fresh data.");
+                    // --- debug ---
+                    // Log why timestamp check failed
+                    if (!enTimestamp || !zhTimestamp || !mapTimestamp) {
+                        console.log("Locale Cache: Timestamps missing. Fetching fresh data.");
+                     } else {
+                        console.log("Locale Cache: Cache expired. Fetching fresh data.");
+                        // Optional: Log expiry times for debugging
+                        console.log("Expiry Debug:", { now, enTimestamp, zhTimestamp, mapTimestamp, expiry: LOCALE_CACHE_EXPIRY_MS });
+                     }
+                     cacheValid = false; // Explicitly set invalid
+                     // --- end debug ---
                 }
+
             }  catch (e) {
                 console.warn("Locale Cache: Error reading or parsing cache.", e);
                 cacheValid = false; // Treat parsing errors as invalid cache
@@ -125,6 +138,7 @@ export function useTranslations() {
 
 
             // --- Use Cache or Fetch New Data
+            console.log("CACHE CHECK: Final cacheValid flag:", cacheValid);
             if (cacheValid && cachedEnData && cachedZhData && cachedMap) {
                 // Use cached data
                 setLocaleData({'en-US': cachedEnData, 'zh-CN': cachedZhData});
@@ -173,8 +187,8 @@ export function useTranslations() {
                         localStorage.setItem(getLocaleCacheKey('zh-CN'), JSON.stringify(zhData));
                         localStorage.setItem(getLocaleTimestampKey('zh-CN'), currentTimeStamp);
 
-                        localStorage.setItem(getWeaponMapCacheKey(), currentTimeStamp);
-                        localStorage.setItem(getWeaponMapCacheKey(), currentTimeStamp);
+                        localStorage.setItem(getWeaponMapCacheKey(), JSON.stringify(nameMap));
+                        localStorage.setItem(getWeaponMapTimestampKey(), currentTimeStamp);
                         console.log("Locale Cache: Updated with fresh data and timestamp.")
                     } catch (e) {
                         console.warn("Locale Cache: Failed to write cache.", e);
@@ -232,7 +246,7 @@ export function useTranslations() {
         // Proceed with lookup using idToLookup in the current locale
         if (currentLocale !== 'en-US' && localeData?.[currentLocale]) {
             const translation = localeData[currentLocale][category]?.[idToLookup]?.name;
-            console.log(`Lookup: localeData[${currentLocale}][${category}][${idToLookup}].name -> Result:`, translation); // Log lookup result
+            //console.log(`Lookup: localeData[${currentLocale}][${category}][${idToLookup}].name -> Result:`, translation); // Log lookup result #debug
             if (translation) {
                 return translation;
             } else {
