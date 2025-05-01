@@ -18,6 +18,7 @@ export function useScheduleData() {
 
     // Function to fetch schedule data (defined once using useCallback)
     const fetchSchedule = useCallback(async () => {
+        console.log("fetchSchedule started...");
         setIsLoadingSchedule(true);
         setScheduleError(null);
         const now = Date.now();
