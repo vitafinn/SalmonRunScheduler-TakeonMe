@@ -490,8 +490,8 @@ function AvailabilityDisplay(){
 				hostAvailability={availableSlots}
 				t={t}
 				currentLocale={currentLocale}
-				handleTriggerBooking={handleTriggerBooking}
-				isBookingLoading={isBookingLoading}
+				handleBookClick={handleTriggerBooking}
+				//isBookingLoading={isBookingLoading}
 			/>
 
 
