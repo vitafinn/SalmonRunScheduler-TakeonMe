@@ -227,16 +227,17 @@ function AvailabilityDisplay(){
 				} catch (parseError) {
 					throw new Error(errorMsg);
 				}
+			}
 
-
+			
 				const data = await response.json();
 				console.log("Booking successul:", data);
 
 
 				// --- Success Sequence ---
-				setIsBookingModalOpen(false); // 1. Close the booking modal
-				setLastVisitorCode(data.visitorBookingCode); // 2. Set data for Success Modal
-				setIsSuccessModalOpen(true); // 3. Open the success modal
+				setIsBookingModalOpen(false);                    // 1. Close the booking modal
+				setLastVisitorCode   (data.visitorBookingCode);  // 2. Set data for Success Modal
+				setIsSuccessModalOpen(true);                     // 3. Open the success modal
 
 
 				// Save to Local Storage
@@ -248,7 +249,7 @@ function AvailabilityDisplay(){
 					console.warn("Could not save user info to Local Storage:", storageError);
 				}
 				fetchSchedulesAndHostSlots(); // Refresh slot list
-			}
+			
 
 		} catch (err) {
 			console.error("Booking submission failed:", err);
