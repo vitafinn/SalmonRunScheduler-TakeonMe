@@ -1,8 +1,20 @@
 import { useState, useEffect,useCallback } from "react";
 
 
+// --- Cache Configuration ---
+const LOCALE_CACHE_DURATION_MINUTES = 55;
+const LOCALE_CACHE_EXPIRY_MS = LOCALE_CACHE_DURATION_MINUTES * 60 * 1000;
+
+
+// Function Helper to generate localStorage keys
+const getLocaleCacheKey = (locale) => `localeCache_${locale}`;
+const getLocaleTimestampKey = (locale) => `localeCacheTimestamp_${locale}`;
+const getWeaponMapCacheKey = () => `weaponMapCache`; // Key for preproceesed map
+const getWeaponMapTimestampKey = () => `weaponMapCacheTimestamp`;
+
+
 // --- Fetch Helper ---
-const fetchAllLocaleData = async (locale) => {
+const fetchLocaleData = async (locale) => {
     // Only fetch supported locales
     if (locale !== 'zh-CN' && 
         locale !== 'en-US' && 
@@ -63,65 +75,131 @@ export function useTranslations() {
         const loadData = async () => {
             setIsLoadingLocale(true);
             setLocaleError(null);
+            const now = Date.now(); // Get current time for comparison
             console.log("Loading all locale data...");
 
 
+            // Attempt to load from Cache
+            let cachedEnData = null;
+            let cachedZhData = null;
+            let cachedMap = null;
+            let cacheValid = false; // Assume cache is invalid initially
+
+
             try{
-                // Fetch both languages concurrently
-                const [enData, zhData] = await Promise.all([
-                    fetchAllLocaleData('en-US'),
-                    fetchAllLocaleData('zh-CN')
-                ]);
+                // Check cache timestamps first
+                const enTimestamp = localStorage.getItem(getLocaleTimestampKey('en-US'));
+                const zhTimestamp = localStorage.getItem(getLocaleTimestampKey('zh-CN'));
+                const mapTimestamp = localStorage.getItem(getWeaponMapTimestampKey());
+                //console.log("CACHE CHECK: Timestamps found:", {enTimestamp, zhTimestamp, mapTimestamp}); // debug
 
 
-                if (!enData || !zhData) {
-                    throw new Error ("Failed to load essential locale data.")
+                // Chche is valid *only* if all parts exist and are not expired
+                if (enTimestamp && zhTimestamp && mapTimestamp &&
+                    (now - parseInt(enTimestamp, 10) < LOCALE_CACHE_EXPIRY_MS) &&
+                    (now - parseInt(zhTimestamp, 10) < LOCALE_CACHE_EXPIRY_MS) &&
+                    (now - parseInt(mapTimestamp, 10) < LOCALE_CACHE_EXPIRY_MS))
+                    {
+                        console.log("Locale Cache: Timestamps valid. Attempting to load data...")
+                        const enDataStr = localStorage.getItem(getLocaleCacheKey('en-US'));
+                        const zhDataStr = localStorage.getItem(getLocaleCacheKey('zh-CN'));
+                        const mapStr = localStorage.getItem(getWeaponMapCacheKey());
+                        
+
+                        if (enDataStr && zhDataStr && mapStr) {
+                            cachedEnData = JSON.parse(enDataStr);
+                            cachedZhData = JSON.parse(zhDataStr);
+                            cachedMap = JSON.parse(mapStr);
+                            cacheValid = true;
+                            console.log("Locale Cache: Successfully loaded all data from cache.")
+                        } else {
+                            console.log("Locale Cache: Timestamp valid, but data missing. Cache invalid.");
+                        }
+                } else {
+                    console.log("Locale Cache: Cache expired or timestamps missing. Fetching fresh data.");
                 }
+            }  catch (e) {
+                console.warn("Locale Cache: Error reading or parsing cache.", e);
+                cacheValid = false; // Treat parsing errors as invalid cache
+            }
 
 
-                // --- Preprocess English data to create Name -> ID map ---
-                const nameMap = {};
-                /* let mapEntryCount = 0; // Counter for debugging */
-                if (enData.weapons) {
-                    console.log(`Processing ${Object.keys(enData.weapons).length} weapons from en-US locale...`)
-                    for (const [id, weaponInfo] of Object.entries(enData.weapons)) {
-                        if (weaponInfo && weaponInfo.name) {
-                            // Log each entry being added
-                            //console.log(`Mapping: '${weaponInfo.name}' -> '${id}'`);
-                            // Handle potential duplicate names? for now, first wins.
-                            if (!nameMap[weaponInfo.name]) {
+            // --- Use Cache or Fetch New Data
+            if (cacheValid && cachedEnData && cachedZhData && cachedMap) {
+                // Use cached data
+                setLocaleData({'en-US': cachedEnData, 'zh-CN': cachedZhData});
+                setWeaponNameToldMap(cachedMap);
+                setLocaleError(null); // Clear any previous error
+                console.log("Locale state updated from cache.")
+            } else {
+                // Cache invalid or failed, fetch fresh data
+                console.log("Locale Cache; Fetching fresh data from API...");
+                try{
+                    const [enData, zhData] = await Promise.all([
+                        fetchLocaleData('en-US'),
+                        fetchLocaleData('zh-CN')
+                    ]);
+
+
+                    if (!enData || !zhData) {
+                        throw new Error ("Failed to load essential locale data during fetch.")
+                    }
+
+
+                    // Preprocess English data
+                    const nameMap = {}
+                    if (enData.weapons) {
+                        for (const [id, weaponInfo] of Object.entries(enData.weapons)) {
+                            if (weaponInfo?.name && !nameMap[weaponInfo.name]) {
                                 nameMap[weaponInfo.name] = id;
-                                /* mapEntryCount++; */
-                            } else {
-                                console.warn(`Duplicate English weapon name found in locale file: '${weaponInfo.name}'. ID ${id} ignored.`)
                             }
                         }
                     }
+
+
+                    // Update state
+                    setWeaponNameToldMap(nameMap);
+                    setLocaleData({ 'en-US': enData, 'zh-CN': zhData });
+                    setLocaleError(null); // Clear error on successful fetch
+                    console.log("Locale state updated from fetch.");
+
+
+                    // --- Update Cache ---
+                    try {
+                        const currentTimeStamp = Date.now().toString();
+                        localStorage.setItem(getLocaleCacheKey('en-US'), JSON.stringify(enData));
+                        localStorage.setItem(getLocaleTimestampKey('en-US'), currentTimeStamp);
+
+                        localStorage.setItem(getLocaleCacheKey('zh-CN'), JSON.stringify(zhData));
+                        localStorage.setItem(getLocaleTimestampKey('zh-CN'), currentTimeStamp);
+
+                        localStorage.setItem(getWeaponMapCacheKey(), currentTimeStamp);
+                        localStorage.setItem(getWeaponMapCacheKey(), currentTimeStamp);
+                        console.log("Locale Cache: Updated with fresh data and timestamp.")
+                    } catch (e) {
+                        console.warn("Locale Cache: Failed to write cache.", e);
+                    }
+                    // --- End Update Cache ---
+
+                    
+                } catch (err) {
+                    console.error("Error fetching/processing fresh locale data:", err);
+                    setLocaleError(err.message);
+                    // Clear potentially stale state
+                    setLocaleData({'en-US': null, 'zh-CN': null});
+                    setWeaponNameToldMap({});
                 }
-                setWeaponNameToldMap(nameMap);
-                console.log("Weapon Name -> ID map created.");
-                console.log("Map examples.", JSON.stringify(Object.fromEntries(Object.entries(nameMap).slice(0, 5)))); // Show first 5 entries
-                // --- End Processing ---
-
-
-                // Store both locale data objects
-                setLocaleData({
-                    'en-US': enData,
-                    'zh-CN': zhData
-                });
-                console.log("All locale data stored.");
-            } catch (err) {
-                setLocaleError(err.message);
-                setLocaleData({ 'en-US': null, 'zh-CN': null}); // Clear data on error
-                setWeaponNameToldMap({});
-            } finally {
-                setIsLoadingLocale(false);
             }
+
+
+            // Set loading false regardless of cache hit or fetch result
+            setIsLoadingLocale(false);
+            console.log("Locale loading process finished.");
         };
 
 
         loadData();
-    }, []); // Re-run effect when currentLocale changes
+    }, []); // Run only once on mount
 
 
     // --- Translation function 't' ---
@@ -136,7 +214,7 @@ export function useTranslations() {
             const crypticId = weaponNameToldMap[key] // Use the map
             if (crypticId) {
                 idToLookup = crypticId; // Use the cryptic ID for lookup
-                console.log(`Mapped weapon name '${key}' to ID '${idToLookup}'`);
+                //console.log(`Mapped weapon name '${key}' to ID '${idToLookup}'`); // debug
             } else {
                 console.warn(`Could not find locale ID for weapon name: ${key}`);
                 return fallbackText || key;
