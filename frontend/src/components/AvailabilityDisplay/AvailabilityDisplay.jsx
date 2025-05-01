@@ -8,21 +8,20 @@ import ShiftDetailModal from '../ShiftDetailModal/ShiftDetailModal';
 import ScheduleList from '../ScheduleList/ScheduleList';
 import SuccessModal from '../SuccessModal/SuccessModal';
 import BookingFormModal from '../BookingFormModal/BookingFormModal';
+import { useScheduleData } from '../../hooks/useScheduleData';
+import { useFormStatus } from 'react-dom';
 
 
 
 function AvailabilityDisplay(){
 	// --- Hooks ---
 	const { currentLocale, changeLocale, t, isLoadingLocale, localeError } = useTranslations();
+	const { officialSchedule, isLoadingSchedule, scheduleError }           = useScheduleData();
 
-	// --- State for Data ---
+	// --- State for Host Slots ---
 	const [availableSlots, setAvailableSlots]         = useState([]);    //init as empty array
 	const [isLoadingHostSlots, setIsLoadingHostSlots] = useState(true);  // Start as true, loading initially
 	const [hostSlotsError, setHostSlotsError]         = useState(null);  // Start with no error
-
-	const [officialSchedule, setOfficialSchedule]                   = useState(null);  // Store coopGroupingSchedule object
-	const [isLoadingOfficialSchedule, setIsLoadingOfficialSchedule] = useState(true);  //Loading state for external API
-	const [officialScheduleError, setOfficialScheduleError]         = useState(null);  // Error state for external API
 
 
 	// --- State for  UI Interaction ---
@@ -80,75 +79,31 @@ function AvailabilityDisplay(){
 	// --- Data Fetching ---
 	// useCallback memoizes the function definition, preventing unneccessary re-creations
 	// which can be important if passed as a prop or used in dependency arrays.
-	const fetchSchedulesAndHostSlots = useCallback(async () => {
+	const fetchHostSlots = useCallback(async () => {
 		// Set ALL loading states true
 		setIsLoadingHostSlots(true);
-		setIsLoadingOfficialSchedule(true);
 		setHostSlotsError(null);
-		setOfficialScheduleError(null);
-		console.log("Fetching host availability and official schedule...");
-		
-
-		let hostData = null; // Declare variables outside try
-		let officialDataRaw = null; // To store the raw response
-		let proccessedSchedule = null;
-
-		
+		console.log("Fetching host availability...");
 		try {
-			const [hostResponse, officialResponse] = await Promise.all([
-				fetch('http://localhost:3001/api/availability'),       // Our backend
-				fetch('https://splatoon3.ink/data/schedules.json'),     // Ink Api
-			]);
-
-
-			// --- Check BOTH responses first ---
-			if (!hostResponse.ok){throw new Error(`Host Availability fetch failed: ${hostResponse.status}`);}
-			if (!officialResponse.ok){throw new Error(`Official Schedule fetch failed: ${officialResponse.status}`);}
-
-
-			// --- Parse BOTH responses ---
-			// Assign to the variables declared outside
-			hostData = await hostResponse.json();
-			officialDataRaw = await officialResponse.json();
-
-
-			// --- Process Official Schedule Data ---
-			if (officialDataRaw.data?.coopGroupingSchedule) {
-				proccessedSchedule = officialDataRaw.data.coopGroupingSchedule; // Stroe processed data
-				console.log("Official schedule proccessed successfully");
-			} else {
-				throw new Error("Could not find SR schedule in ooficial data")
-			}
-
-
-			// --- Update State AFTER all processing is successul ---
+			const response = await fetch('http://localhost:3001/api/availability');
+			if (!response.ok) throw new Error(`Hsot Availability fetch failed: ${response.status}`);
+			const hostData = await response.json();
 			setAvailableSlots(hostData);
-			setOfficialSchedule(proccessedSchedule);
-			console.log("Host availability and official schedule states updated.");
-
-
+			console.log("Host availability fetched:", hostData.length, "slots");
 		} catch (err) {
-
-			console.error("Error during fetch or processing:", err);
-			// Set general error states, assuming either fetch might have failed
-			setHostSlotsError(`Failed to load data: ${err.message}`);
-			setOfficialScheduleError(`Failed to load data: ${err.message}`);
-
-			// Clear any potentially partial data
+			console.error("Error fetching host slots:", err);
+			setHostSlotsError(err.message);
 			setAvailableSlots([]);
-			setOfficialSchedule(null);
 		} finally {
 			setIsLoadingHostSlots(false);
-			setIsLoadingOfficialSchedule(false);
-			console.log("Fetch function finished.")
 		}
-	}, []); // Dependencies might need adjustment
+	}, []);
 
 
 	// --- useEffect ---
 	useEffect(() => {
 		// Load initial friend code from local storage ONCE on mount
-		fetchSchedulesAndHostSlots();
+		fetchHostSlots();
 
 		// --- loadStorage Load Logic ---
 		try {
@@ -164,7 +119,7 @@ function AvailabilityDisplay(){
 		}
 		// --- End Local Storage Logic ---
 		
-	}, [fetchSchedulesAndHostSlots]); // Include fetchSlots in dependency array as per linting rules with useCallback. Or potentially just [] if fetch doesn't need deps
+	}, [fetchHostSlots]); // Include fetchSlots in dependency array as per linting rules with useCallback. Or potentially just [] if fetch doesn't need deps
 
 
 	// --- UI Interaction Handlers ---
@@ -248,7 +203,7 @@ function AvailabilityDisplay(){
 				} catch (storageError) {
 					console.warn("Could not save user info to Local Storage:", storageError);
 				}
-				fetchSchedulesAndHostSlots(); // Refresh slot list
+				fetchHostSlots(); // Refresh slot list
 			
 
 		} catch (err) {
@@ -265,9 +220,9 @@ function AvailabilityDisplay(){
 	// --- Debug ---
 	console.log('rendering check:', {
 		isLoadingHostSlots,
-		isLoadingOfficialSchedule,
+		isLoadingSchedule,
 		hostSlotsError,
-		officialScheduleError,
+		scheduleError,
 		officialScheduleExists: !!officialSchedule,
 		availableSlotsLength: availableSlots.length
 	});
@@ -279,17 +234,6 @@ function AvailabilityDisplay(){
 	
 	return (
 		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
-
-			{/* --- Top Bar: Title + Language Button --- */}
-{/* 			<h2 className='text-2xl font-semibold mb-4 text-cyan-300'> 
-				可预约的时间
-			</h2>
-			<p className='text-lg font-semibold text-orange-300 mb-2'> 
-				当地时间
-			</p> */}
-
-
-
 			{/* --- Top Bar: Title + Language Button --- */}
 			<div className='flex justify-between items-center mb-4'>
 				<h2 className='text-lg font-semibold text-cyan-300'>
@@ -309,17 +253,17 @@ function AvailabilityDisplay(){
 
 			
 			{/* --- Loading/Error Display --- */}
-			{(isLoadingHostSlots || isLoadingOfficialSchedule || isLoadingLocale) && (
+			{(isLoadingHostSlots || isLoadingSchedule || isLoadingLocale) && (
 				<p className='text-gray-400'>{t('ui', 'loadingSchedules', 'Loading schedules...')}</p>
 			)}
 			{hostSlotsError && <p className='text-red-400'>{t('ui', 'errorLoadingHost', 'Error loading Host availability:')} {hostSlotsError}</p>}
-			{officialScheduleError && <p className='text-red-400'>{t('ui', 'errorLoadingOffical', 'Error loading official schedule:')} {officialScheduleError}</p>}
+			{scheduleError && <p className='text-red-400'>{t('ui', 'errorLoadingOffical', 'Error loading official schedule:')} {scheduleError}</p>}
 			{localeError && <p className='text-red-400'>{t('ui', 'errorLoadingLocale', 'Error loading language data:')} {localeError}</p>}
 
 
 			{/* --- Schedule List --- */}
 			{/* Render ScheduleList only when data is ready */}
-			{!isLoadingHostSlots && !isLoadingOfficialSchedule && !isLoadingLocale && !hostSlotsError && !officialScheduleError && !localeError && officialSchedule && availableSlots && (
+			{!isLoadingHostSlots && !isLoadingSchedule && !isLoadingLocale && !hostSlotsError && !scheduleError && !localeError && officialSchedule && availableSlots && (
 				<ScheduleList
 					officialSchedule={officialSchedule}
 					hostAvailability={availableSlots}
