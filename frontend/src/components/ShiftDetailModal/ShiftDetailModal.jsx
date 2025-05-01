@@ -11,9 +11,7 @@ function shiftDetailModal({
     hostAvailability,       // Array: ALL of the host's available 30-min slots
     t,                      // Function: Translation helper
     currentLocale,          // String: Current language setting
-    handleBookClick,        // Function: Passed from parent to trigger booking form state
-    selectedSlotId,         // String/null: ID of the slot selected IN THIS MODAL (for button state) - passed from parent
-    isBookingLoading        // Boolean: Is a booking POST request in progress? - passed from parent
+    handleBookClick,        // Function: Receive handleTriggerBooking from parent
 }) {
     // --- Gaurd Clause ---
     if (typeof t !== 'function') return <div>Error: Missing translation function.</div>;
@@ -75,16 +73,12 @@ function shiftDetailModal({
                                             // Call the handleBookClick passed from AvailabilityDisplay
                                             // This will set selectedSlotId *in the parent* and trigger the *parent's* booking form/modal
                                             onClick={() => {
-                                                handleBookClick(slot.id);
+                                                handleBookClick(slot);
                                                 onClose();
                                             }}
-                                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50"
-                                            // Disable if parent indicates a booking is loading OR if this specific slot is already selected in parent
-                                            disabled={isBookingLoading || selectedSlotId === slot.id}
+                                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm"
                                         >
-                                            {selectedSlotId === slot.id 
-                                            ? t('ui', 'bookButtonSelected', 'Selected')
-                                            : t('ui', 'bookButtonLabel', 'Book')}
+                                            {t('ui', 'bookButtonLabel', 'Book')}
                                         </button>
                                     </li>
                                 ))}
