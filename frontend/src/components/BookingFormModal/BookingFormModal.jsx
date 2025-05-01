@@ -46,8 +46,12 @@ function BookingFormModal ({
     };
 
 
+    // --- Debug ---
+    //console.log("BookingFormModal received slotToBook:", slotToBook);
+
+
     // --- Get formatted time for display ---
-    const displayTime = `${formatTime(slotToBook.start_time)} - ${formatTime(slotToBook.end_time)}`;
+    const displayTime = `${formatTime(slotToBook.start_time, currentLocale)} - ${formatTime(slotToBook.end_time, currentLocale)}`;
 
 
     return (

@@ -32,8 +32,10 @@ function AvailabilityDisplay(){
 	//const [expandedShiftStartTime, setExpandedShiftStartTime] = useState(null);   // Track clicked/expanded shift
 	const [isDetailModalOpen, setIsDetailModalOpen]   = useState(false);
 	const [detailShiftData, setDetailShiftData]       = useState(null);
-	const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-	const [slotDataForBooking, setSlotDataForBooking] = useState(null);
+
+	const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);  // Booking form
+	const [slotDataForBooking, setSlotDataForBooking] = useState(null);	  // Booking form
+
 	const [selectedSlotId, setSelectedSlotId]         = useState(null);   // Track which slot ID is being booked
 	const [friendCode, setFriendCode]                 = useState('');     // Input for Friend Code
 	const [message, setMessage]                       = useState('');     // Input for Message
@@ -188,6 +190,9 @@ function AvailabilityDisplay(){
 	// --- Function handleTriggerBooking ---
 	const handleTriggerBooking = (slot) => {
 		if (!slot) return;
+		// --- Add Debug Log ---
+		//console.log("handleTriggerBooking received slot:", slot);
+		// --- End Debug Log ---
 		console.log("Triggering booking modal for slot:", slot);
 		setSlotDataForBooking(slot);  // Store the slot object for the modal
 		setIsBookingModalOpen(true);  // Open the booking modal
@@ -284,7 +289,7 @@ function AvailabilityDisplay(){
 			// Set the success message including the visitor code from the backend
 			setLastVisitorCode(data.visitorBookingCode); // Store the specific code
 			setIsSuccessModalOpen(true);
-			console.log("!!! Setting isSuccessModalOpen to true !!!"); // debug
+			//console.log("!!! Setting isSuccessModalOpen to true !!!"); // debug
 
 			try{
 				// Store the visitor's code in Local Storage
@@ -306,7 +311,7 @@ function AvailabilityDisplay(){
 
 			// --- IMPORTANT: Refresh list of available slots ---
 			fetchSchedulesAndHostSlots();
-			console.log("Called function to refresh slots/schedule."); // debug
+			//console.log("Called function to refresh slots/schedule."); // debug
 
 
 		} catch (err) {
@@ -409,7 +414,7 @@ function AvailabilityDisplay(){
 	console.log(' --- official schedule content ---')
 	console.log(officialSchedule);
 	// debug
-	console.log("Rendering with currentLocale:", currentLocale);
+	//console.log("Rendering with currentLocale:", currentLocale);
 	// --- End Debug ---
 	
 	return (

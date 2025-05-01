@@ -73,7 +73,7 @@ function shiftDetailModal({
                                             // Call the handleBookClick passed from AvailabilityDisplay
                                             // This will set selectedSlotId *in the parent* and trigger the *parent's* booking form/modal
                                             onClick={() => {
-                                                handleBookClick(slot.id);
+                                                handleBookClick(slot);
                                                 onClose();
                                             }}
                                             className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm"
