@@ -70,9 +70,9 @@ function BookingFormModal ({
                     className="w-full max-w-md transform rounded-2xl bg-gray-700 p-6 text-left align-middle shadow-xl duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
                 >
                     {/* Title */}
-                    < DialogTitle as="h3" className="text-xl font-semibold leading-6 text-cyan-300 mb-4">
+                    < DialogTitle as="h3" className="flex-col text-3xl font-semibold text-cyan-300 mb-8">
                         {t('ui', 'bookingModalTitle', 'Confirm Booking')}
-                        <span className="block text-sm font-normal text-gray-300 mt-1">
+                        <span className="block text-sm font-normal text-gray-300 mt-2">
                             Slot: {displayTime} (ID: {slotToBook.id})
                         </span>
                     </DialogTitle>
@@ -82,7 +82,7 @@ function BookingFormModal ({
                     <form onSubmit={handleLocalSubmit} className="space-y-4">
                         {/* Friend Code Input */}
                         <div>
-                            <label htmlFor="modalFriendCode" className="block text-sm font-medium text-gray-200 mb-1">
+                            <label htmlFor="modalFriendCode" className="block text-lg font-medium text-gray-200 mb-1">
                                 {t('ui', 'friendCodeLabel', 'Your Friend Code:')} <span className="text-red-400">*</span>
                             </label>
                             <input
@@ -91,13 +91,13 @@ function BookingFormModal ({
                                 value={friendCode}
                                 onChange={(e) => setFriendCode(e.target.value)} // Update local state
                                 required
-                                className="w-full px-3 py-2 rounded-md bg-gray-600 border border-gray-500 text-white focus:outline-none focus:border-cyan-400"
+                                className="w-full px-3 py-2 rounded-md bg-gray-600 border border-gray-500 text-white focus:outline-none focus:border-cyan-400 text-lg font-s2"
                                 placeholder={t('ui', 'friendCodePlaceholder', 'SW-XXXX-XXXX-XXXX (可以只输入12位数字)')}
                             />
                         </div>
                         {/* Message Input */}
                         <div>
-                            <label htmlFor="modalMessage" className="block text-sm font-medium text-gray-200 mb-1">
+                            <label htmlFor="modalMessage" className="block text-lg font-medium text-gray-200 mb-1">
                                 {t('ui', 'messageLabel', 'Message for me (Optional):')}
                             </label>
                             <textarea
@@ -105,7 +105,7 @@ function BookingFormModal ({
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 rows="2"
-                                className="w-full px-3 py-2 rounded-md bg-gray-600 border border-gray-500 text-white focus:outline-none focus:border-cyan-400"
+                                className="w-full px-3 py-2 rounded-md bg-gray-600 border border-gray-500 text-white focus:outline-none focus:border-cyan-400 font-s2 text-lg"
                                 placeholder={t('ui', 'messagePlaceholder', '请填写额外信息，比如联系方式，更细腻的预约时间等')}
                             />
                         </div>

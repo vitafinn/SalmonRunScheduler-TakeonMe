@@ -23,7 +23,7 @@ function ScheduleList({
 
         return (
             <div>
-                <h3 className={`text-xl font-semibold ${titleColor} mb-3`}>
+                <h3 className={`text-base ${titleColor} mb-3`}>
                     {t('ui', titleKey, defaultTitle)}
                 </h3>
                 <div className="space-y-4">

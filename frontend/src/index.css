@@ -1,1 +1,117 @@
+/* src/index.css */
+
+/* Import base Tailwind styles */
 @import "tailwindcss";
+
+/* Define custom theme variables */
+@theme {
+  /* Salmon Run Orange shades */
+  --color-sr-orange-light: #FF7B4E;
+  --color-sr-orange: #F5652D;        /* Default orange */
+  --color-sr-orange-dark: #D94F25;
+
+  /* Salmon Run Green shades */
+  --color-sr-green-light: #AEE54B;
+  --color-sr-green: #72B00A;        /* Default green */
+  --color-sr-green-dark: #3C7D00;
+
+  /* Theme Text & Backgrounds */
+  --color-sr-text-light: #F5F5F5;
+  --color-sr-text-dark: #2E2E2E;
+  --color-sr-bg-dark: #252525;
+  --color-sr-bg-medium: #4A4A4A;
+  --color-sr-bg-light: #6B6B6B;
+
+
+  --font-s1: 'Splatoon1', system-ui, sans-serif;
+  --font-s2: 'Splatoon2', system-ui, sans-serif;
+}
+
+
+/* --- Define Custon Fonts --- */
+
+/* --- Splatoon 1 Font Definition --- */
+@font-face {
+  font-family: 'Splatoon1';
+  src: url('/fonts/splatoon1/Splatoon1-common.ef3ed3dd.woff2') format('woff2'),
+       url('/fonts/splatoon1/Splatoon1-common.4808937b.woff') format('woff');
+  /* Basic Latin, Latin Supplement, Symbols etc. (Approximate range) */
+  unicode-range: U+0000-024F, U+02B0-02FF, U+03??, U+1E??, U+20??, U+2190-22FF;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Splatoon1';
+  src: url('/fonts/splatoon1/Splatoon1-symbol-common.b47e3dae.woff2') format('woff2'),
+       url('/fonts/splatoon1/Splatoon1-symbol-common.44f6599a.woff') format('woff');
+  /* Common Symbols Range (Approximate) */
+  unicode-range: U+25A0-26FF; /* Geometric Shapes, Misc Symbols */
+  font-display: swap;
+}
+/* CJK Common - For shared Chinese/Japanese/Korean chars */
+@font-face {
+  font-family: 'Splatoon1';
+  src: url('/fonts/splatoon1/Splatoon1-cjk-common.7c0f653f.woff2') format('woff2'),
+       url('/fonts/splatoon1/Splatoon1-cjk-common.8cd1b402.woff') format('woff');
+  /* Common CJK Unified Ideographs Range */
+  unicode-range: U+4E00-9FFF;
+  font-display: swap;
+}
+/* Simplified Chinese Level 1 */
+@font-face {
+  font-family: 'Splatoon1';
+  src: url('/fonts/splatoon1/Splatoon1CHzh-level1.49e06a96.woff2') format('woff2'),
+       url('/fonts/splatoon1/Splatoon1CHzh-level1.7bf8a44a.woff') format('woff');
+  /* Define specific range if known, otherwise omit or use broader CJK range again */
+  /* unicode-range: ... */
+  font-display: swap;
+}
+/* Simplified Chinese Level 2 */
+@font-face {
+  font-family: 'Splatoon1';
+  src: url('/fonts/splatoon1/Splatoon1CHzh-level2.54e1f4fb.woff2') format('woff2'),
+       url('/fonts/splatoon1/Splatoon1CHzh-level2.87fc5929.woff') format('woff');
+  /* Define specific range if known */
+  /* unicode-range: ... */
+  font-display: swap;
+}
+
+/* --- Splatoon 2 Font Definition (Similar Structure) --- */
+@font-face {
+  font-family: 'Splatoon2';
+  src: url('/fonts/splatoon2/Splatoon2-common.f43f7808.woff2') format('woff2'),
+       url('/fonts/splatoon2/Splatoon2-common.e352e2e0.woff') format('woff');
+  unicode-range: U+0000-024F, U+02B0-02FF, U+03??, U+1E??, U+20??, U+2190-22FF;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Splatoon2';
+  src: url('/fonts/splatoon2/Splatoon2-symbol-common.06a86efe.woff2') format('woff2'),
+       url('/fonts/splatoon2/Splatoon2-symbol-common.616a86f2.woff') format('woff');
+  unicode-range: U+25A0-26FF;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Splatoon2';
+  src: url('/fonts/splatoon2/Splatoon2-cjk-common.20fa1d3c.woff2') format('woff2'),
+       url('/fonts/splatoon2/Splatoon2-cjk-common.94e9789f.woff') format('woff');
+  unicode-range: U+4E00-9FFF;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Splatoon2';
+  src: url('/fonts/splatoon2/Splatoon2CHzh-level1.9757e3cb.woff2') format('woff2'),
+       url('/fonts/splatoon2/Splatoon2CHzh-level1.b285d699.woff') format('woff');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Splatoon2';
+  src: url('/fonts/splatoon2/Splatoon2CHzh-level2.b9f37aea.woff2') format('woff2'),
+       url('/fonts/splatoon2/Splatoon2CHzh-level2.78f60849.woff') format('woff');
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-s1);
+  }
+}

@@ -24,72 +24,73 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
     // Define base and highlight styles
-    const baseCardClasses = "items-center p-3 bg-gray-800 rounded-lg border shadow-md space-x-4 transition-all duration-200";
-    const highlightClasses = "border-yellow-400 border-[3px] scale-[1.02] shadow-yellow-500/50 shadow-lg cursor-pointer bg-gray-700 hover:bg-slate-600"; // Added scale, shadow, cursor, hover
-    const nonHighlightClasses = "opacity-80 border-gray-700"; // Dim non-available shifts slightly
+    const cardBase = "p-2 bg-gray-800 rounded-lg border shadow-md transition-all duration-200 space-y-3 ";
+    const highlightEffect = hasOverlap
+        ? "border-[#098264] border-[6px] scale-[1.01] md:scale-[1.02] shadow-lg shadow-green-900/50 cursor-pointer hover:bg-[#c44b21]" // Orange BG on hover *only* if highlighted
+        : "border-gray-700 opacity-60"; // Dimmed and plain border if no overlap
 
 
     return(
         <div
-            className={`${baseCardClasses} ${hasOverlap ? highlightClasses : nonHighlightClasses}`}
+            className={`${cardBase} ${highlightEffect} font-s2 flex space-x-3 items-center`}
             onClick={hasOverlap ? onExpand : undefined} // Call onExpand only if highlighted
         >
-            <div className="flex items-center p-3 bg-gray-800 rounded-lg border border-gray-700 shadow-md space-x-4">
-                {/* Stage Image and Name */}
-                <div className="flex-shrink-0 w-20 h-14"> {/* Fixed size container for image */}
-                    <img
-                        src={stage?.image?.url}
-                        alt={stage?.name || 'Stage'} // Use stage name as alt text
-                        className="w-full h-full object-cover rounded" // object cover ensures image covers the area without distortion
-                        onError={(e) => {e.target.style.display = 'none'; /* Hide if image fails */}}
-                    />
-                </div>
+            
+            {/* Stage Image and Name */}
+            <div className=""> {/* Fixed size container for image */}
+
+                <img
+                    src={stage?.image?.url}
+                    alt={stage?.name || 'Stage'} // Use stage name as alt text
+                    className="block  object-cover  rounded m-1" // object cover ensures image covers the area without distortion max-w-[100px] max-h-[200]
+                    onError={(e) => {e.target.style.display = 'none'; /* Hide if image fails */}}
+                />
+            </div>
 
 
-                {/* Middle Section: Time and Stage Name */}
-                <div className="flex-grow flex-shrink basis-0 flex flex-col justify-center h-20">
-                    <p className="text-sm font-semibold text-orange-300">
-                        {formattedStartTime} - {formattedEndTime}
+            {/* Middle Section: Time and Stage Name */}
+            <div className="flex-grow flex-shrink basis-0 flex flex-col justify-center items-center">
+                <p className="text-xs text-orange-300">
+                    {formattedStartTime} - {formattedEndTime}
+                </p>
+                <p className="text-base leading-relaxed text-sr-text-light text-white mt-1">
+                    {t('stages', stage?.id, stage?.name) || 'Unknown Stage'}
+                </p>
+                {/* Show King Salmonid */}
+                {boss?.name &&(
+                    <p className="text-xs text-gray-400 mt-1">
+                        {('ui', 'kingSalmonid', 'King Salmonid:')} {t('bosses', boss?.id, boss?.name) || boss?.name}
                     </p>
-                    <p className="text-lg font-bold text-white mt-1">
-                        {t('stages', stage?.id, stage?.name) || 'Unknown Stage'}
-                    </p>
-                    {/* Show King Salmonid */}
-                    {boss?.name &&(
-                        <p className="text-xs text-gray-400 mt-1">
-                            {('ui', 'kingSalmonid', 'King Salmonid:')} {t('bosses', boss?.id, boss?.name) || boss?.name}
-                            </p>
+                )}
+            </div>
+
+
+            {/* Right Section: Weapons */}
+            <div className="flex flex-col items-center space-y-1 min-w-0">
+                <p className="text-xs md:text-base text-gray-400 mb-1 ">{t('ui', 'weaponsLabel', 'Weapons')}</p>
+                <div className="flex-col sm:flex sm:flex-row space-x-1 space-y-1">
+                    {weapons?.map((weapon, index) => {
+                    /* // --- temp debug log ---
+                        console.log(`Rendering weapon from SCHEDULE: Name='${weapon?.name}', ID='${weapon?.__splatoon3ink_id || 'N/A'}'`);
+                        // --- Eng debug log --- */
+                        return (
+                            <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
+                                <img
+                                    src={weapon?.image?.url}
+                                    alt={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`}
+                                    title={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`} // Tooltip on hover
+                                    //alt={weapon?.name || `Weapon ${index + 1}`}
+                                    //title={weapon?.name || `Weapon ${index + 1}`} // debug
+                                    className="w-full h-full object-contain" // object-contain keeps aspect ratio
+                                    onError={(e) => { e.target.src = '';}}
+                                />
+                            </div>
+                        );
+                    })}
+                    {/* Handle case where weapons might be unknown */}
+                    {(!weapons || weapons.length === 0) && (
+                        <p className="text-gray-500 text-lg">????</p>
                     )}
-                </div>
-
-
-                {/* Right Section: Weapons */}
-                <div className="flex flex-col items-center space-y-1 flex-shrink-0">
-                    <p className="text-xs text-gray-400 mb-1 font-semibold">{t('ui', 'weaponsLabel', 'Weapons')}</p>
-                    <div className="flex space-x-1">
-                        {weapons?.map((weapon, index) => {
-/*                             // --- temp debug log ---
-                            console.log(`Rendering weapon from SCHEDULE: Name='${weapon?.name}', ID='${weapon?.__splatoon3ink_id || 'N/A'}'`);
-                            // --- Eng debug log --- */
-                            return (
-                                <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
-                                    <img
-                                        src={weapon?.image?.url}
-                                        alt={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`}
-                                        title={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`} // Tooltip on hover
-                                        //alt={weapon?.name || `Weapon ${index + 1}`}
-                                        //title={weapon?.name || `Weapon ${index + 1}`} // debug
-                                        className="w-full h-full object-contain" // object-contain keeps aspect ratio
-                                        onError={(e) => { e.target.src = '';}}
-                                    />
-                                </div>
-                            );
-                        })}
-                        {/* Handle case where weapons might be unknown */}
-                        {(!weapons || weapons.length === 0) && (
-                            <p className="text-gray-500 text-lg">????</p>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>
