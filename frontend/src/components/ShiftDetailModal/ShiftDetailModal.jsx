@@ -39,7 +39,7 @@ function shiftDetailModal({
 
 
             {/* Modal Content Container */}
-            <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+            <div className="fixed inset-0 flex w-screen items-center justify-center p-4 font-s2">
                 <DialogPanel
                     transition
                     className="w-full max-w-xl transform rounded-2xl bg-gray-700 p-6 text-left align-middle shadow-xl duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0" // Slightly wider max-w-xl
@@ -58,7 +58,7 @@ function shiftDetailModal({
 
 
                     {/* --- Modal Body: List of Available Host Slots --- */}
-                    <DialogTitle as="h3" className="text-lg font-medium leading-6 text-cyan-300 mb-3">
+                    <DialogTitle as="h3" className="text-lg font-medium leading-6 text-cyan-300 mb-3 font-s1">
                         {t('ui', 'detailModalTitle', 'Your Available Slots During This Shift:')}
                     </DialogTitle>
                     <div className="mt-2 max-h-60 overflow-y-auto pr-2 border-t border-gray-600 pt-3"> {/* Scrollable list */}
@@ -76,7 +76,7 @@ function shiftDetailModal({
                                                 handleBookClick(slot);
                                                 onClose();
                                             }}
-                                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm"
+                                            className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
                                         >
                                             {t('ui', 'bookButtonLabel', 'Book')}
                                         </button>
@@ -95,7 +95,7 @@ function shiftDetailModal({
                     <div className="mt-5 text-right">
                         <button
                             type="button"
-                            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
+                            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-s1 text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
                             onClick={onClose}
                         >
                             {t('ui', 'closeButtonLabel', 'Close')}

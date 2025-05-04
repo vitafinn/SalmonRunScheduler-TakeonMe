@@ -1,0 +1,189 @@
+@font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1-common.ef3ed3dd.woff2) format("woff2"),url(/assets/Splatoon1-common.4808937b.woff) format("woff");
+    unicode-range: U+0000-007f,U+0080-00ff,U+0100-017f,U+0180-024f,U+02b0-02ff,U+0300-036f,U+0370-03ff,U+04??,U+2000-206f,U+2190-21ff,U+e000-f8ff
+}
+
+@font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1-symbol-common.b47e3dae.woff2) format("woff2"),url(/assets/Splatoon1-symbol-common.44f6599a.woff) format("woff");
+    unicode-range: U+20a0-20cf,U+2100-214f,U+22??,U+23??,U+25a0-25ff,U+26??,U+fb00-fb4f
+}
+
+@font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1-cjk-common.7c0f653f.woff2) format("woff2"),url(/assets/Splatoon1-cjk-common.8cd1b402.woff) format("woff");
+    unicode-range: U+3000-303f,U+4e00-9fff,U+ff00-ffef
+}
+
+@font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1JP-hiragana-katakana.6e3caba3.woff2) format("woff2"),url(/assets/Splatoon1JP-hiragana-katakana.5bd82778.woff) format("woff");
+    unicode-range: U+3040-309f,U+30a0-30ff
+}
+
+font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1KRko-level1.91af9f6f.woff2) format("woff2"),url(/assets/Splatoon1KRko-level1.0b436d33.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1;
+    src: url(/assets/Splatoon1KRko-level2.ffdc8fa2.woff2) format("woff2"),url(/assets/Splatoon1KRko-level2.54a0385f.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1jpja;
+    src: url(/assets/Splatoon1JP-level1.9c676d16.woff2) format("woff2"),url(/assets/Splatoon1JP-level1.8ea6dddb.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1jpja;
+    src: url(/assets/Splatoon1JP-level1.9c676d16.woff2) format("woff2"),url(/assets/Splatoon1JP-level1.8ea6dddb.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1jpja;
+    src: url(/assets/Splatoon1JP-level2.d16a06a7.woff2) format("woff2"),url(/assets/Splatoon1JP-level2.0b87de2a.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1chzh;
+    src: url(/assets/Splatoon1CHzh-level1.49e06a96.woff2) format("woff2"),url(/assets/Splatoon1CHzh-level1.7bf8a44a.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1chzh;
+    src: url(/assets/Splatoon1CHzh-level2.54e1f4fb.woff2) format("woff2"),url(/assets/Splatoon1CHzh-level2.87fc5929.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1twzh;
+    src: url(/assets/Splatoon1TWzh-level1.caee8bcb.woff2) format("woff2"),url(/assets/Splatoon1TWzh-level1.23f65658.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon1twzh;
+    src: url(/assets/Splatoon1TWzh-level2.edc4253e.woff2) format("woff2"),url(/assets/Splatoon1TWzh-level2.dab6452f.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2-common.f43f7808.woff2) format("woff2"),url(/assets/Splatoon2-common.e352e2e0.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2-symbol-common.06a86efe.woff2) format("woff2"),url(/assets/Splatoon2-symbol-common.616a86f2.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2-cjk-common.20fa1d3c.woff2) format("woff2"),url(/assets/Splatoon2-cjk-common.94e9789f.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2JP-hiragana-katakana.00ba9757.woff2) format("woff2"),url(/assets/Splatoon2JP-hiragana-katakana.972791b5.woff) format("woff");
+    unicode-range: U+3040-309f,U+30a0-30ff
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2KRko-level1.690e029d.woff2) format("woff2"),url(/assets/Splatoon2KRko-level1.4dc3fa3d.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2;
+    src: url(/assets/Splatoon2KRko-level2.c645a38d.woff2) format("woff2"),url(/assets/Splatoon2KRko-level2.ec168d65.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2jpja;
+    src: url(/assets/Splatoon2JP-level1.cfe2e8a5.woff2) format("woff2"),url(/assets/Splatoon2JP-level1.0f85d6bd.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2jpja;
+    src: url(/assets/Splatoon2JP-level2.c86e2534.woff2) format("woff2"),url(/assets/Splatoon2JP-level2.f93c4610.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2chzh;
+    src: url(/assets/Splatoon2CHzh-level1.9757e3cb.woff2) format("woff2"),url(/assets/Splatoon2CHzh-level1.b285d699.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2chzh;
+    src: url(/assets/Splatoon2CHzh-level2.b9f37aea.woff2) format("woff2"),url(/assets/Splatoon2CHzh-level2.78f60849.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2twzh;
+    src: url(/assets/Splatoon2TWzh-level1.fb5f378e.woff2) format("woff2"),url(/assets/Splatoon2TWzh-level1.42393176.woff) format("woff");
+}
+
+@font-face {
+    font-family: splatoon2twzh;
+    src: url(/assets/Splatoon2TWzh-level2.361d4920.woff2) format("woff2"),url(/assets/Splatoon2TWzh-level2.ddd20903.woff) format("woff");
+}
+
+*,:before,:after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e5e7eb
+}
+
+:before,:after {
+    --tw-content: ""
+}
+
+html,:host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    font-family: ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    -webkit-tap-highlight-color: transparent
+}
+
+body {
+    margin: 0;
+    line-height: inherit
+}
+
+hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px
+}
+
+abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-size: inherit;
+    font-weight: inherit
+}
+
+a {
+    color: inherit;
+    text-decoration: inherit
+}
+
+b,strong {
+    font-weight: bolder
+}
+
+code,kbd,samp,pre {
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    font-size: 1em
+}
