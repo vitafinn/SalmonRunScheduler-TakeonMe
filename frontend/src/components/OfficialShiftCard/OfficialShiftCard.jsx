@@ -24,7 +24,7 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
     // Define base and highlight styles
-    const cardBase = "p-2 bg-gray-800 rounded-lg border shadow-md transition-all duration-200 space-y-3 ";
+    const cardBase = "p-2 bg-gray-800 rounded-lg border shadow-md transition-all duration-200";
     const highlightEffect = hasOverlap
         ? "border-[#098264] border-[6px] scale-[1.01] md:scale-[1.02] shadow-lg shadow-green-900/50 cursor-pointer hover:bg-[#c44b21]" // Orange BG on hover *only* if highlighted
         : "border-gray-700 opacity-60"; // Dimmed and plain border if no overlap
@@ -32,33 +32,33 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
     return(
         <div
-            className={`${cardBase} ${highlightEffect} font-s2 flex space-x-3 items-center`}
+            className={`${cardBase} ${highlightEffect}  font-s2 flex space-x-1 items-center `} //${hasOverlap ? 'animate-pulse' : ''}
             onClick={hasOverlap ? onExpand : undefined} // Call onExpand only if highlighted
         >
             
             {/* Stage Image and Name */}
-            <div className=""> {/* Fixed size container for image */}
+            <div className="w-1/3 max-w-[24rem]  flex-shrink-0 self-center md:self-start aspect-video"> {/* Fixed size container for image */}
 
                 <img
                     src={stage?.image?.url}
                     alt={stage?.name || 'Stage'} // Use stage name as alt text
-                    className="block  object-cover  rounded m-1" // object cover ensures image covers the area without distortion max-w-[100px] max-h-[200]
+                    className="block object-cover rounded  " // object cover ensures image covers the area without distortion max-w-[100px] max-h-[200]
                     onError={(e) => {e.target.style.display = 'none'; /* Hide if image fails */}}
                 />
             </div>
 
 
             {/* Middle Section: Time and Stage Name */}
-            <div className="flex-grow flex-shrink basis-0 flex flex-col justify-center items-center">
-                <p className="text-xs text-orange-300">
+            <div className="flex-grow flex-shrink basis-0 flex flex-col  justify-center min-[450px]:items-center">
+                <p className="text-sm min-[450px]:text-base text-orange-300">
                     {formattedStartTime} - {formattedEndTime}
                 </p>
-                <p className="text-base leading-relaxed text-sr-text-light text-white mt-1">
+                <p className="text-lg min-[500px]:text-2xl leading-relaxed text-sr-text-light text-white mt-1">
                     {t('stages', stage?.id, stage?.name) || 'Unknown Stage'}
                 </p>
                 {/* Show King Salmonid */}
                 {boss?.name &&(
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-sm min-[450px]:text-base text-gray-400 mt-1">
                         {('ui', 'kingSalmonid', 'King Salmonid:')} {t('bosses', boss?.id, boss?.name) || boss?.name}
                     </p>
                 )}
@@ -66,15 +66,15 @@ function OfficialShiftCard({ shift, t, currentLocale, hasOverlap, onExpand }) {
 
 
             {/* Right Section: Weapons */}
-            <div className="flex flex-col items-center space-y-1 min-w-0">
+            <div className="flex flex-col items-center  min-w-0  ">
                 <p className="text-xs md:text-base text-gray-400 mb-1 ">{t('ui', 'weaponsLabel', 'Weapons')}</p>
-                <div className="flex-col sm:flex sm:flex-row space-x-1 space-y-1">
+                <div className="flex-col sm:flex sm:flex-row">
                     {weapons?.map((weapon, index) => {
                     /* // --- temp debug log ---
                         console.log(`Rendering weapon from SCHEDULE: Name='${weapon?.name}', ID='${weapon?.__splatoon3ink_id || 'N/A'}'`);
                         // --- Eng debug log --- */
                         return (
-                            <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5"> {/* Smaller weapon icons */}
+                            <div key={`${weapon?.name || 'unknown'}-${index}`} className="w-8 h-8 bg-gray-700 rounded p-0.5 m-0.5"> {/* Smaller weapon icons */}
                                 <img
                                     src={weapon?.image?.url}
                                     alt={t('weapons', weapon?.name, weapon?.name) || `Weapon ${index + 1}`}

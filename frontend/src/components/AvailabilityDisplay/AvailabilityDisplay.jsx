@@ -85,7 +85,7 @@ function AvailabilityDisplay(){
 		setHostSlotsError(null);
 		console.log("Fetching host availability...");
 		try {
-			const response = await fetch('http://localhost:3001/api/availability');
+			const response = await fetch('/api/availability');
 			if (!response.ok) throw new Error(`Hsot Availability fetch failed: ${response.status}`);
 			const hostData = await response.json();
 			setAvailableSlots(hostData);
@@ -167,7 +167,7 @@ function AvailabilityDisplay(){
 
 
 		try {
-			const response = await fetch('http://localhost:3001/api/bookings', {
+			const response = await fetch('/api/bookings', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(bookingData),
@@ -233,9 +233,9 @@ function AvailabilityDisplay(){
 	// --- End Debug ---
 	
 	return (
-		<div className="bg-gray-700 p-6 rounded-lg shadow-lg w-full">
+		<div className="bg-gray-700 p-2 rounded-lg shadow-lg w-full">
 			{/* --- Top Bar: Title + Language Button --- */}
-			<div className='flex justify-between items-center mb-4'>
+			<div className='flex flew-row justify-between items-center mb-4'>
 				<h2 className='text-xl text-cyan-300'>
 					{t('ui', 'mainTitle', 'Official Schedule & My Availability')}
 				</h2>

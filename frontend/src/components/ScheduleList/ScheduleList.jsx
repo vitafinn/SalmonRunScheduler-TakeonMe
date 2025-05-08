@@ -60,9 +60,9 @@ function ScheduleList({
     return (
         <div className="space-y-6">
             {/* Render each section using the helper */}
-            {renderShiftSection('upcomingShiftsTitle', 'Upcoming Shifts', officialSchedule.regularSchedules)}
-            {renderShiftSection('bigRunActiveTitle', 'Big run Active!', officialSchedule.bigRunschedulesSchedules, 'text-red-400')}
-            {renderShiftSection('teamContestTitle', 'Team Contest', officialSchedule.teamContestSchedulesSchedules, 'text-purple-400')}
+            {renderShiftSection('upcomingShiftsTitle', 'Upcoming Shifts', officialSchedule.regularSchedules, 'text-[#c44b21]')}
+            {renderShiftSection('bigRunActiveTitle', 'Big run Active!', officialSchedule.bigRunSchedules, 'text-red-400')}
+            {renderShiftSection('teamContestTitle', 'Team Contest', officialSchedule.teamContestSchedules, 'text-[#dda024]')}
 
 
             {/* Message if no shifts were found in any section (unlikely) */}
