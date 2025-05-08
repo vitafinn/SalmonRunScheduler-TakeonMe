@@ -175,14 +175,15 @@ app.post('/api/availability', (req, res) => {
 
         // Array to keep track of errors during insertion attempts
         const insertionRunErrors = []; // Declare an array to hold errors
-
+		
+		// Excute inserts
         slotsToInsert.forEach(slot => {
             // For each slot, run the insert statement
             stmt.run(slot.start, slot.end, function(err) { // Use function() for 'this'
                 // This callback executes for each run() call
                 if (err) {
                     // If this specific insertion failed, log it and record the error
-                    console.error("Error inserting slot:", slot.start, err.message);
+                    console.error("Error during stml.run:", slot.start, err.message);
                     insertionRunErrors.push({ slot: slot.start, message: err.message });
                 } else {
                     // Log success or ignore status
@@ -213,7 +214,7 @@ app.post('/api/availability', (req, res) => {
             // Next, check if any errors were collected during the stmt.run() calls
             if (insertionRunErrors.length > 0) {
                  // If there were insertion errors, report a failure
-                 console.log(`Finalizing with ${insertionRunErrors.length} insertion errors recorded.`);
+                 console.warn(`Finalizing with ${insertionRunErrors.length} insertion errors recorded.`);
                  // Use 'return' to ensure no other response is sent
                  return res.status(500).json({
                      error: `Failed to insert ${insertionRunErrors.length} slot(s) due to errors or conflicts. Check server logs.`,
