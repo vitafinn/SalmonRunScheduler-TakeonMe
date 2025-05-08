@@ -26,7 +26,7 @@ function CreateAvailability() {
 
     try {
       // Send POST request to backend API
-      const response = await fetch('http://localhost:3001/api/availability', {
+      const response = await fetch('/api/availability', {
         method: 'POST', // Specify the method
         headers: {
           'Content-Type': 'application/json', // Tell the backend we're sending JSON
